@@ -3,6 +3,7 @@
     "displayName": "RSS",
     "description": "A RSS reader embedded in Visual Studio Code",
     "version": "0.0.1",
+    "publisher": "luyuhuang",
     "engines": {
         "vscode": "^1.40.0"
     },
@@ -10,7 +11,8 @@
         "Other"
     ],
     "activationEvents": [
-        "*"
+        "onView:rss-feeds",
+        "onView:rss-articles"
     ],
     "main": "./out/extension.js",
     "contributes": {
@@ -21,6 +23,11 @@
                     "type": "array",
                     "default": [],
                     "description": "A list of feeds"
+                },
+                "rss.interval": {
+                    "type": "integer",
+                    "default": 900,
+                    "description": "Refresh Interval(s)"
                 }
             }
         },
@@ -40,6 +47,30 @@
                     "light": "resources/light/refresh.svg",
                     "dark": "resources/dark/refresh.svg"
                 }
+            },
+            {
+                "command": "rss.refresh-one",
+                "title": "Refresh One",
+                "icon": {
+                    "light": "resources/light/refresh.svg",
+                    "dark": "resources/dark/refresh.svg"
+                }
+            },
+            {
+                "command": "rss.open-link",
+                "title": "Open Link"
+            },
+            {
+                "command": "rss.set-read",
+                "title": "Set as read"
+            },
+            {
+                "command": "rss.set-unread",
+                "title": "Set as unread"
+            },
+            {
+                "command": "rss.set-all-read",
+                "title": "Set all to read"
             }
         ],
         "viewsContainers": {
@@ -54,8 +85,8 @@
         "views": {
             "rss-reader": [
                 {
-                    "id": "rss-sources",
-                    "name": "Sources"
+                    "id": "rss-feeds",
+                    "name": "Feeds"
                 },
                 {
                     "id": "rss-articles",
@@ -67,8 +98,35 @@
             "view/title": [
                 {
                     "command": "rss.refresh",
-                    "when": "view == rss-sources",
+                    "when": "view == rss-feeds",
                     "group": "navigation"
+                },
+                {
+                    "command": "rss.refresh-one",
+                    "when": "view == rss-articles",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "rss.open-link",
+                    "when": "view == rss-articles"
+                },
+                {
+                    "command": "rss.set-read",
+                    "when": "view == rss-articles"
+                },
+                {
+                    "command": "rss.set-unread",
+                    "when": "view == rss-articles"
+                },
+                {
+                    "command": "rss.set-all-read",
+                    "when": "view == rss-feeds"
+                },
+                {
+                    "command": "rss.refresh-one",
+                    "when": "view == rss-feeds"
                 }
             ]
         }
@@ -87,6 +145,7 @@
         "@types/mocha": "^7.0.2",
         "@types/node": "^13.11.0",
         "@types/he": "^1.1.0",
+        "@types/cheerio": "0.22.16",
         "eslint": "^6.8.0",
         "@typescript-eslint/parser": "^2.26.0",
         "@typescript-eslint/eslint-plugin": "^2.26.0",
@@ -98,6 +157,7 @@
     "dependencies": {
         "fast-xml-parser": "^3.16.0",
         "got": "10.6.0",
-        "he": "^1.2.0"
+        "he": "^1.2.0",
+        "cheerio": "1.0.0-rc.3"
 	}
 }

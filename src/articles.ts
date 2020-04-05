@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { Entry } from './content';
 
 export class ArticleList implements vscode.TreeDataProvider<Article> {
     private _onDidChangeTreeData: vscode.EventEmitter<Article | undefined> = new vscode.EventEmitter<Article | undefined>();
@@ -16,24 +17,27 @@ export class ArticleList implements vscode.TreeDataProvider<Article> {
         if (element) return [];
         const list = [];
         for (const article of this.articles) {
-            list.push(new Article(article.title, article.content));
+            list.push(new Article(article));
         }
         return list;
     }
 
-    private articles: any[] = [];
-    setArticles(articles: any[]): void{
+    public articles: Entry[] = [];
+    setArticles(articles: Entry[]): void{
         this.articles = articles;
         this.refresh();
     }
 }
 
-class Article extends vscode.TreeItem {
+export class Article extends vscode.TreeItem {
     constructor(
-        private title: string,
-        private content: string
+        public entry: Entry
     ) {
-        super(title, vscode.TreeItemCollapsibleState.None);
-        this.command = {command: 'rss.read', title: 'Read', arguments: [title, content]};
+        super(entry.title);
+
+        this.description = new Date(entry.date).toLocaleString();
+        this.command = {command: 'rss.read', title: 'Read', arguments: [entry]};
+        if (!entry.read)
+            this.iconPath = new vscode.ThemeIcon('circle-outline')
     }
 }
