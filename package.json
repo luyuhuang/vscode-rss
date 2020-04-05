@@ -4,6 +4,11 @@
     "description": "A RSS reader embedded in Visual Studio Code",
     "version": "0.0.1",
     "publisher": "luyuhuang",
+    "author": "luyuhuang",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/luyuhuang/vscode-rss.git"
+    },
     "engines": {
         "vscode": "^1.40.0"
     },
@@ -16,7 +21,7 @@
     ],
     "main": "./out/extension.js",
     "contributes": {
-        "configuration":{
+        "configuration": {
             "title": "rss",
             "properties": {
                 "rss.feeds": {
@@ -140,7 +145,7 @@
         "test": "node ./out/test/runTest.js"
     },
     "devDependencies": {
-        "@types/vscode": "^1.43.0",
+        "@types/vscode": "^1.40.0",
         "@types/glob": "^7.1.1",
         "@types/mocha": "^7.0.2",
         "@types/node": "^13.11.0",
@@ -155,9 +160,9 @@
         "vscode-test": "^1.3.0"
     },
     "dependencies": {
+        "cheerio": "1.0.0-rc.3",
         "fast-xml-parser": "^3.16.0",
         "got": "10.6.0",
-        "he": "^1.2.0",
-        "cheerio": "1.0.0-rc.3"
-	}
+        "he": "^1.2.0"
+    }
 }

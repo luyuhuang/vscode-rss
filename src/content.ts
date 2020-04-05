@@ -1,4 +1,4 @@
-import * as parser from "fast-xml-parser"
+import * as parser from "fast-xml-parser";
 import * as he from 'he';
 import * as cheerio from 'cheerio';
 import { URL } from "url";
@@ -19,8 +19,10 @@ export class Entry {
         } else if (dom.title.text) {
             title = dom.title.text;
         }
-        if (!title) throw new Error("Feed Format Error: Entry Missing Title");
-        title = he.decode(title)
+        if (!title) {
+            throw new Error("Feed Format Error: Entry Missing Title");
+        }
+        title = he.decode(title);
 
         let content;
         if (dom.content) {
@@ -36,19 +38,25 @@ export class Entry {
         } else if (dom.description.text) {
             content = dom.description.text;
         }
-        if (!content) throw new Error("Feed Format Error: Entry Missing Content");
+        if (!content) {
+            throw new Error("Feed Format Error: Entry Missing Content");
+        }
         content = he.decode(content);
         const $ = cheerio.load(content);
         $('a').each((_, ele) => {
             const $ele = $(ele);
             const href = $ele.attr('href');
-            if (href) $ele.attr('href', new URL(href, baseURL).href)
+            if (href) {
+                $ele.attr('href', new URL(href, baseURL).href);
+            }
         });
         $('img').each((_, ele) => {
             const $ele = $(ele);
             const src = $ele.attr('src');
-            if (src) $ele.attr('src', new URL(src, baseURL).href)
-        })
+            if (src) {
+                $ele.attr('src', new URL(src, baseURL).href);
+            }
+        });
         content = he.decode($.html());
 
         let date;
@@ -57,7 +65,9 @@ export class Entry {
         } else if (dom.pubDate) {
             date = dom.pubDate;
         }
-        if (!date) throw new Error("Feed Format Error: Entry Missing Date");
+        if (!date) {
+            throw new Error("Feed Format Error: Entry Missing Date");
+        }
         date = new Date(date).getTime();
 
         let link;
@@ -68,8 +78,10 @@ export class Entry {
         } else if (dom.source) {
             link = dom.source;
         }
-        if (!link) throw new Error("Feed Format Error: Entry Missing Link");
-        link = new URL(link, baseURL).href
+        if (!link) {
+            throw new Error("Feed Format Error: Entry Missing Link");
+        }
+        link = new URL(link, baseURL).href;
 
         return new Entry(title, content, date, link, false);
     }
@@ -103,7 +115,9 @@ export class Content {
         } else if (dom["rdf:RDF"]) {
             feed = dom["rdf:RDF"];
         }
-        if (!feed) throw new Error('Feed Format Error');
+        if (!feed) {
+            throw new Error('Feed Format Error');
+        }
 
         let title;
         if (feed.title && typeof (feed.title) !== "object") {
@@ -111,7 +125,9 @@ export class Content {
         } else if (feed.title.text) {
             title = feed.title.text;
         }
-        if (!title) throw new Error('Feed Format Error: Missing Title');
+        if (!title) {
+            throw new Error('Feed Format Error: Missing Title');
+        }
         title = he.decode(title);
 
         let link: any;
@@ -122,7 +138,9 @@ export class Content {
         } else if (feed.id) {
             link = feed.id;
         }
-        if (!link) throw new Error('Feed Format Error: Missing Link');
+        if (!link) {
+            throw new Error('Feed Format Error: Missing Link');
+        }
         if (!link.match(/^https?:\/\//)) {
             if (link.match(/^\/\//)) {
                 link = 'http:' + link;
@@ -137,7 +155,9 @@ export class Content {
         } else if (feed.entry) {
             items = feed.entry;
         }
-        if (!items) throw new Error('Feed Format Error');
+        if (!items) {
+            throw new Error('Feed Format Error');
+        }
 
         const entries: Entry[] = items.map((item: any) => Entry.fromDOM(item, link));
         return new Content(title, entries);

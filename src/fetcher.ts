@@ -5,13 +5,13 @@ import { Content, Entry, Summary } from './content';
 export class Fetcher {
     private storage: vscode.Memento;
     constructor(context: vscode.ExtensionContext) {
-        this.storage = context.globalState
+        this.storage = context.globalState;
     }
 
     async fetch(url: string, update: boolean=true): Promise<Content> {
         let summery: Summary | undefined = this.storage.get(url);
         const links = new Set<string>();
-        let content
+        let content;
         if (update || !summery) {
             try {
                 const res = await got(url);
@@ -27,19 +27,23 @@ export class Fetcher {
                 return this.storage.update(entry.link, entry);
             }));
 
-            if (!summery)
+            if (!summery) {
                 summery = new Summary(content.title, []);
-            else
-                summery.title = content.title
+            } else {
+                summery.title = content.title;
+            }
         } else {
             content = new Content(summery.title, []);
         }
 
         for (const link of summery.catelog) {
-            if (links.has(link)) continue;
+            if (links.has(link)) {
+                continue;
+            }
             const entry: Entry | undefined = this.storage.get(link);
-            if (entry)
-                content.entries.push(entry)
+            if (entry) {
+                content.entries.push(entry);
+            }
         }
         if (links.size > 0) {
             summery.catelog = content.entries.map(entry => entry.link);

@@ -14,7 +14,7 @@ export class ArticleList implements vscode.TreeDataProvider<Article> {
     }
 
     getChildren(element?: Article): Article[] {
-        if (element) return [];
+        if (element) {return [];}
         const list = [];
         for (const article of this.articles) {
             list.push(new Article(article));
@@ -37,7 +37,8 @@ export class Article extends vscode.TreeItem {
 
         this.description = new Date(entry.date).toLocaleString();
         this.command = {command: 'rss.read', title: 'Read', arguments: [entry]};
-        if (!entry.read)
-            this.iconPath = new vscode.ThemeIcon('circle-outline')
+        if (!entry.read) {
+            this.iconPath = new vscode.ThemeIcon('circle-outline');
+        }
     }
 }
