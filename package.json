@@ -18,6 +18,12 @@
     "categories": [
         "Other"
     ],
+    "keywords": [
+        "news",
+        "rss",
+        "feed",
+        "reader"
+    ],
     "activationEvents": [
         "onView:rss-feeds",
         "onView:rss-articles"
