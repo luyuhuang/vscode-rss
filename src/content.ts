@@ -2,6 +2,32 @@ import * as parser from "fast-xml-parser";
 import * as he from 'he';
 import * as cheerio from 'cheerio';
 import { URL } from "url";
+import { isString, isArray } from "util";
+
+function order(attr: any) {
+    if (!attr) {
+        return -2;
+    }
+    if (attr.rel === 'alternate') {
+        return 1;
+    } else if (!attr.rel) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+function parseLink(link: any) {
+    let ans;
+    if (isString(link)) {
+        ans = link;
+    } else if (isArray(link) && link.length > 0) {
+        ans = link.reduce((a, b) => order(a.attr) > order(b.attr) ? a : b).attr.href;
+    } else if (link.attr) {
+        ans = link.attr.href;
+    }
+    return ans;
+}
 
 export class Entry {
     constructor(
@@ -14,31 +40,35 @@ export class Entry {
 
     static fromDOM(dom: any, baseURL: string): Entry {
         let title;
-        if (dom.title && typeof (dom.title) !== "object") {
-            title = dom.title;
-        } else if (dom.title.text) {
-            title = dom.title.text;
+        if (dom.title) {
+            if (isString(dom.title)) {
+                title = dom.title;
+            } else if (dom.title.text) {
+                title = dom.title.text;
+            }
         }
-        if (!title) {
+        if (!isString(title)) {
             throw new Error("Feed Format Error: Entry Missing Title");
         }
         title = he.decode(title);
 
         let content;
         if (dom.content) {
-            if (dom.content.text) {
-                content = dom.content.text;
-            } else {
+            if (isString(dom.content)) {
                 content = dom.content;
+            } else if (dom.content.text) {
+                content = dom.content.text;
             }
         } else if (dom["content:encoded"]) {
             content = dom["content:encoded"];
-        } else if (dom.description && typeof (dom.description) !== "object") {
-            content = dom.description;
-        } else if (dom.description.text) {
-            content = dom.description.text;
+        } else if (dom.description) {
+            if (isString(dom.description)) {
+                content = dom.description;
+            } else if (dom.description.text) {
+                content = dom.description.text;
+            }
         }
-        if (!content) {
+        if (!isString(content)) {
             throw new Error("Feed Format Error: Entry Missing Content");
         }
         content = he.decode(content);
@@ -60,25 +90,25 @@ export class Entry {
         content = he.decode($.html());
 
         let date;
-        if (dom.updated) {
-            date = dom.updated;
+        if (dom.published) {
+            date = dom.published;
         } else if (dom.pubDate) {
             date = dom.pubDate;
+        } else if (dom.updated) {
+            date = dom.updated;
         }
-        if (!date) {
+        if (!isString(date)) {
             throw new Error("Feed Format Error: Entry Missing Date");
         }
         date = new Date(date).getTime();
 
         let link;
-        if (dom.link && typeof (dom.link) !== "object") {
-            link = dom.link;
-        } else if (dom.link.attr) {
-            link = dom.link.attr.href;
+        if (dom.link) {
+            link = parseLink(dom.link);
         } else if (dom.source) {
             link = dom.source;
         }
-        if (!link) {
+        if (!isString(link)) {
             throw new Error("Feed Format Error: Entry Missing Link");
         }
         link = new URL(link, baseURL).href;
@@ -89,6 +119,7 @@ export class Entry {
 
 export class Content {
     constructor(
+        public link: string,
         public title: string,
         public entries: Entry[],
     ) {}
@@ -120,25 +151,23 @@ export class Content {
         }
 
         let title;
-        if (feed.title && typeof (feed.title) !== "object") {
-            title = feed.title;
-        } else if (feed.title.text) {
-            title = feed.title.text;
+        if (feed.title) {
+            if (isString(feed.title)) {
+                title = feed.title;
+            } else if (feed.title.text) {
+                title = feed.title.text;
+            }
         }
-        if (!title) {
+        if (!isString(title)) {
             throw new Error('Feed Format Error: Missing Title');
         }
         title = he.decode(title);
 
         let link: any;
-        if (feed.link && typeof(feed.link) !== 'object') {
-            link = feed.link;
-        } else if (feed.link.attr) {
-            link = feed.link.attr.href;
-        } else if (feed.id) {
-            link = feed.id;
+        if (feed.link) {
+            link = parseLink(feed.link);
         }
-        if (!link) {
+        if (!isString(link)) {
             throw new Error('Feed Format Error: Missing Link');
         }
         if (!link.match(/^https?:\/\//)) {
@@ -160,12 +189,13 @@ export class Content {
         }
 
         const entries: Entry[] = items.map((item: any) => Entry.fromDOM(item, link));
-        return new Content(title, entries);
+        return new Content(link, title, entries);
     }
 }
 
 export class Summary {
     constructor(
+        public link: string,
         public title: string,
         public catelog: string[],
     ) {}

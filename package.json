@@ -55,15 +55,19 @@
             },
             {
                 "command": "rss.refresh-one",
-                "title": "Refresh One",
+                "title": "Refresh",
                 "icon": {
                     "light": "resources/light/refresh.svg",
                     "dark": "resources/dark/refresh.svg"
                 }
             },
             {
+                "command": "rss.open-website",
+                "title": "Open website"
+            },
+            {
                 "command": "rss.open-link",
-                "title": "Open Link"
+                "title": "Open link"
             },
             {
                 "command": "rss.set-read",
@@ -131,6 +135,10 @@
                 },
                 {
                     "command": "rss.refresh-one",
+                    "when": "view == rss-feeds"
+                },
+                {
+                    "command": "rss.open-website",
                     "when": "view == rss-feeds"
                 }
             ]

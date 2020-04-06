@@ -5,17 +5,18 @@ import { Fetcher } from './fetcher';
 import { Summary, Content, Entry } from './content';
 
 export function activate(context: vscode.ExtensionContext) {
-    // const cfg = vscode.workspace.getConfiguration('rss');
-    // for (const feed of cfg.feeds) {
+    // console.log(context.globalStoragePath);
+    // const config = vscode.workspace.getConfiguration('rss');
+    // for (const feed of config.feeds) {
     //     console.log(feed);
-    //     const summery = context.globalState.get(feed, new Summary('', []))
+    //     const summery = context.globalState.get(feed, new Summary('', '', []));
     //     for (const link of summery.catelog) {
-    //         console.log('--', link)
-    //         context.globalState.update(link, undefined)
+    //         console.log('--', link);
+    //         context.globalState.update(link, undefined);
     //     }
-    //     context.globalState.update(feed, undefined)
+    //     context.globalState.update(feed, undefined);
     // }
-    // return
+    // return;
     const fetcher = new Fetcher(context);
 
     const feed_list = new FeedList(fetcher);
@@ -35,6 +36,11 @@ export function activate(context: vscode.ExtensionContext) {
         feed_list.refresh(true);
         current_feed = undefined;
         article_list.setArticles([]);
+    });
+    context.subscriptions.push(disposable);
+
+    disposable = vscode.commands.registerCommand('rss.open-website', async (feed: Feed) => {
+        vscode.env.openExternal(vscode.Uri.parse(feed.content.link));
     });
     context.subscriptions.push(disposable);
 

@@ -11,14 +11,16 @@ export class Fetcher {
     async fetch(url: string, update: boolean=true): Promise<Content> {
         let summery: Summary | undefined = this.storage.get(url);
         const links = new Set<string>();
+        let need_to_update = false;
         let content;
         if (update || !summery) {
+            need_to_update = true;
             try {
                 const res = await got(url);
                 content = Content.fromXML(res.body.toString());
             } catch (error) {
                 vscode.window.showErrorMessage(error.toString());
-                content = new Content(url, []);
+                content = new Content(url, url, []);
             }
             await Promise.all(content.entries.map(entry => {
                 links.add(entry.link);
@@ -28,12 +30,13 @@ export class Fetcher {
             }));
 
             if (!summery) {
-                summery = new Summary(content.title, []);
+                summery = new Summary(content.link, content.title, []);
             } else {
+                summery.link = content.link;
                 summery.title = content.title;
             }
         } else {
-            content = new Content(summery.title, []);
+            content = new Content(summery.link, summery.title, []);
         }
 
         for (const link of summery.catelog) {
@@ -45,7 +48,7 @@ export class Fetcher {
                 content.entries.push(entry);
             }
         }
-        if (links.size > 0) {
+        if (need_to_update) {
             summery.catelog = content.entries.map(entry => entry.link);
             await this.storage.update(url, summery);
         }
