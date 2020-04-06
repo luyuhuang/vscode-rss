@@ -2,9 +2,12 @@
     "name": "rss",
     "displayName": "RSS",
     "description": "A RSS reader embedded in Visual Studio Code",
+    "license": "MIT",
+    "icon": "logo.png",
     "version": "0.0.1",
     "publisher": "luyuhuang",
     "author": "luyuhuang",
+    "homepage": "https://github.com/luyuhuang/vscode-rss.git",
     "repository": {
         "type": "git",
         "url": "https://github.com/luyuhuang/vscode-rss.git"
