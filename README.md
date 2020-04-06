@@ -2,6 +2,8 @@
 
 A RSS reader embedded in Visual Studio Code
 
+[![version](https://vsmarketplacebadge.apphb.com/version/luyuhuang.rss.svg)](https://marketplace.visualstudio.com/items?itemName=luyuhuang.rss)
+
 ![demonstrate](https://raw.githubusercontent.com/luyuhuang/vscode-rss/master/demonstrate.gif)
 
 ## Introduction
