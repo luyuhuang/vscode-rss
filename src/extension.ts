@@ -34,13 +34,13 @@ export async function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(disposable);
 
-    disposable = vscode.commands.registerCommand('rss.refresh', async () => {
+    disposable = vscode.commands.registerCommand('rss.refresh', async (auto: boolean) => {
         if (updating) {
             return;
         }
         updating = true;
         await vscode.window.withProgress({
-            location: vscode.ProgressLocation.Notification,
+            location: auto ? vscode.ProgressLocation.Window: vscode.ProgressLocation.Notification,
             title: "Updating RSS...",
             cancellable: false
         }, async () => {
@@ -131,7 +131,7 @@ export async function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(disposable);
 
-    const do_refresh = () => vscode.commands.executeCommand('rss.refresh');
+    const do_refresh = () => vscode.commands.executeCommand('rss.refresh', true);
     const cfg = vscode.workspace.getConfiguration('rss');
     let timer = setInterval(do_refresh, cfg.interval * 1000);
 
