@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.0.3 (2020-04-07)
+
+Fix errors when adding feeds
+
 ## v0.0.2 (2020-04-07)
 
 Do some optimization
