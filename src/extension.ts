@@ -4,7 +4,7 @@ import { ArticleList, Article } from './articles';
 import { Fetcher } from './fetcher';
 import { Summary, Content, Entry } from './content';
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
     // console.log(context.globalStoragePath);
     // const config = vscode.workspace.getConfiguration('rss');
     // for (const feed of config.feeds) {
@@ -20,49 +20,79 @@ export function activate(context: vscode.ExtensionContext) {
     const fetcher = new Fetcher(context);
 
     const feed_list = new FeedList(fetcher);
+    await feed_list.fetch(false);
     vscode.window.registerTreeDataProvider('rss-feeds', feed_list);
     const article_list = new ArticleList();
     vscode.window.registerTreeDataProvider('rss-articles', article_list);
 
     let current_feed: string | undefined;
+    let updating: boolean = false;
 
-    let disposable = vscode.commands.registerCommand('rss.articles', (feed: string, content: Content) => {
+    let disposable = vscode.commands.registerCommand('rss.articles', (feed: string) => {
         current_feed = feed;
-        article_list.setArticles(content.entries);
+        article_list.setArticles(feed_list.getContent(feed).entries);
     });
     context.subscriptions.push(disposable);
 
-    disposable = vscode.commands.registerCommand('rss.refresh', () => {
-        feed_list.refresh(true);
-        current_feed = undefined;
-        article_list.setArticles([]);
+    disposable = vscode.commands.registerCommand('rss.refresh', async () => {
+        if (updating) {
+            return;
+        }
+        updating = true;
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: "Updating RSS...",
+            cancellable: false
+        }, async () => {
+            await feed_list.fetch(true);
+            feed_list.refresh();
+            if (current_feed) {
+                article_list.setArticles(feed_list.contents[current_feed].entries);
+            }
+            updating = false;
+        });
     });
     context.subscriptions.push(disposable);
 
     disposable = vscode.commands.registerCommand('rss.open-website', async (feed: Feed) => {
-        vscode.env.openExternal(vscode.Uri.parse(feed.content.link));
+        vscode.env.openExternal(vscode.Uri.parse(feed_list.getContent(feed.feed).link));
     });
     context.subscriptions.push(disposable);
 
     disposable = vscode.commands.registerCommand('rss.refresh-one', async (feed?: Feed) => {
-        if (feed) {
-            feed_list.update(feed.feed);
-        } else if (current_feed) {
-            feed_list.update(current_feed);
-        } else {
+        if (updating) {
             return;
         }
-        current_feed = undefined;
-        article_list.setArticles([]);
+        updating = true;
+        let url: string;
+        if (feed) {
+            url = feed.feed;
+        } else if (current_feed) {
+            url = current_feed;
+        } else{
+            return;
+        }
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: "Updating RSS...",
+            cancellable: false
+        }, async () => {
+            await feed_list.fetch_one(url, true);
+            feed_list.refresh();
+            if (current_feed) {
+                article_list.setArticles(feed_list.contents[current_feed].entries);
+            }
+            updating = false;
+        });
     });
     context.subscriptions.push(disposable);
 
     disposable = vscode.commands.registerCommand('rss.read', (entry: Entry) => {
         const panel = vscode.window.createWebviewPanel('rss', entry.title, vscode.ViewColumn.One, {});
-        panel.webview.html = entry.content;
+        panel.webview.html = '<style type="text/css">body{font-size:1em;}</style>' + entry.content;
         entry.read = true;
         article_list.refresh();
-        feed_list.refresh(false);
+        feed_list.refresh();
         context.globalState.update(entry.link, entry);
     });
     context.subscriptions.push(disposable);
@@ -74,7 +104,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     disposable = vscode.commands.registerCommand('rss.set-read', (article: Article) => {
         article.entry.read = true;
-        feed_list.refresh(false);
+        feed_list.refresh();
         article_list.refresh();
         context.globalState.update(article.entry.link, article.entry);
     });
@@ -82,20 +112,21 @@ export function activate(context: vscode.ExtensionContext) {
 
     disposable = vscode.commands.registerCommand('rss.set-unread', (article: Article) => {
         article.entry.read = false;
-        feed_list.refresh(false);
+        feed_list.refresh();
         article_list.refresh();
         context.globalState.update(article.entry.link, article.entry);
     });
     context.subscriptions.push(disposable);
 
     disposable = vscode.commands.registerCommand('rss.set-all-read', (feed: Feed) => {
-        for (const entry of feed.content.entries) {
+        const entries = feed_list.getContent(feed.feed).entries;
+        for (const entry of entries) {
             entry.read = true;
             context.globalState.update(entry.link, entry);
         }
-        feed_list.refresh(false);
+        feed_list.refresh();
         if (feed.feed === current_feed) {
-            article_list.setArticles(feed.content.entries);
+            article_list.setArticles(entries);
         }
     });
     context.subscriptions.push(disposable);
@@ -105,7 +136,7 @@ export function activate(context: vscode.ExtensionContext) {
     let timer = setInterval(do_refresh, cfg.interval * 1000);
 
     disposable = vscode.workspace.onDidChangeConfiguration((e) => {
-        feed_list.refresh(false);
+        feed_list.refresh();
         clearInterval(timer);
         const cfg = vscode.workspace.getConfiguration('rss');
         timer = setInterval(do_refresh, cfg.interval * 1000);

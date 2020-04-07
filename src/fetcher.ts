@@ -16,7 +16,7 @@ export class Fetcher {
         if (update || !summery) {
             need_to_update = true;
             try {
-                const res = await got(url);
+                const res = await got(url, {timeout: 10_000, retry: 1});
                 content = Content.fromXML(res.body.toString());
             } catch (error) {
                 vscode.window.showErrorMessage(error.toString());
