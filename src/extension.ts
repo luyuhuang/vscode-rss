@@ -135,11 +135,18 @@ export async function activate(context: vscode.ExtensionContext) {
     const cfg = vscode.workspace.getConfiguration('rss');
     let timer = setInterval(do_refresh, cfg.interval * 1000);
 
-    disposable = vscode.workspace.onDidChangeConfiguration((e) => {
-        feed_list.refresh();
+    disposable = vscode.workspace.onDidChangeConfiguration(async (e) => {
         clearInterval(timer);
         const cfg = vscode.workspace.getConfiguration('rss');
         timer = setInterval(do_refresh, cfg.interval * 1000);
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: "Updating RSS...",
+            cancellable: false
+        }, async () => {
+            await feed_list.fetch(false);
+            feed_list.refresh();
+        });
     });
     context.subscriptions.push(disposable);
 }
