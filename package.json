@@ -40,8 +40,18 @@
                 },
                 "rss.interval": {
                     "type": "integer",
-                    "default": 900,
-                    "description": "Refresh Interval(s)"
+                    "default": 3600,
+                    "description": "Refresh interval(s)"
+                },
+                "rss.timeout": {
+                    "type": "integer",
+                    "default": 15,
+                    "description": "Request timeout(s)"
+                },
+                "rss.retry": {
+                    "type": "integer",
+                    "default": 1,
+                    "description": "Request retries"
                 }
             }
         },
