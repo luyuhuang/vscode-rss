@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.0.4 (2020-04-10)
+
+Make `timeout` and `retry` configurable
+
 ## v0.0.3 (2020-04-07)
 
 Fix errors when adding feeds
