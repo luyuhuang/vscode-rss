@@ -69,10 +69,12 @@ export class Entry {
             } else if (isString(dom.description.__cdata)) {
                 content = dom.description.__cdata;
             }
-        } else if (isString(dom.summary)) {
-            content = dom.summary;
-        } else if (isString(dom.summary.text)) {
-            content = dom.summary.text;
+        } else if (dom.summary) {
+            if (isString(dom.summary)) {
+                content = dom.summary;
+            } else if (isString(dom.summary.text)) {
+                content = dom.summary.text;
+            }
         }
         if (!isString(content)) {
             throw new Error("Feed Format Error: Entry Missing Content");
@@ -166,7 +168,7 @@ export class Content {
             } else if (isString(feed.title.text)) {
                 title = feed.title.text;
             }
-        } else if (feed.channel.title) {
+        } else if (feed.channel && feed.channel.title) {
             title = feed.channel.title;
         }
         if (!isString(title)) {
@@ -177,7 +179,7 @@ export class Content {
         let link: any;
         if (feed.link) {
             link = parseLink(feed.link);
-        } else if (feed.channel.link) {
+        } else if (feed.channel && feed.channel.link) {
             link = parseLink(feed.channel.link);
         }
         if (!isString(link)) {
