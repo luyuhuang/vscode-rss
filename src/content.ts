@@ -64,9 +64,15 @@ export class Entry {
         } else if (dom.description) {
             if (isString(dom.description)) {
                 content = dom.description;
-            } else if (dom.description.text) {
+            } else if (isString(dom.description.text)) {
                 content = dom.description.text;
+            } else if (isString(dom.description.__cdata)) {
+                content = dom.description.__cdata;
             }
+        } else if (isString(dom.summary)) {
+            content = dom.summary;
+        } else if (isString(dom.summary.text)) {
+            content = dom.summary.text;
         }
         if (!isString(content)) {
             throw new Error("Feed Format Error: Entry Missing Content");
@@ -96,6 +102,8 @@ export class Entry {
             date = dom.pubDate;
         } else if (dom.updated) {
             date = dom.updated;
+        } else if (dom["dc:date"]) {
+            date = dom["dc:date"];
         }
         if (!isString(date)) {
             throw new Error("Feed Format Error: Entry Missing Date");
@@ -130,7 +138,8 @@ export class Content {
             attrNodeName: "attr",
             textNodeName: "text",
             ignoreAttributes: false,
-            parseAttributeValue: true
+            parseAttributeValue: true,
+            cdataTagName: "__cdata"
         });
         let feed;
         if (dom.rss) {
@@ -154,9 +163,11 @@ export class Content {
         if (feed.title) {
             if (isString(feed.title)) {
                 title = feed.title;
-            } else if (feed.title.text) {
+            } else if (isString(feed.title.text)) {
                 title = feed.title.text;
             }
+        } else if (feed.channel.title) {
+            title = feed.channel.title;
         }
         if (!isString(title)) {
             throw new Error('Feed Format Error: Missing Title');
@@ -166,6 +177,8 @@ export class Content {
         let link: any;
         if (feed.link) {
             link = parseLink(feed.link);
+        } else if (feed.channel.link) {
+            link = parseLink(feed.channel.link);
         }
         if (!isString(link)) {
             throw new Error('Feed Format Error: Missing Link');
