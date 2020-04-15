@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.0.5 (2020-04-15)
+
+Fix a feed loading error on some pages.
+
 ## v0.0.4 (2020-04-10)
 
 Make `timeout` and `retry` configurable
