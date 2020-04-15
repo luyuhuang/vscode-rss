@@ -21,7 +21,7 @@ export class Fetcher {
                 content = Content.fromXML(res.body.toString());
             } catch (error) {
                 vscode.window.showErrorMessage(error.toString());
-                content = new Content(url, url, []);
+                content = new Content(summery?.link || url, summery?.title || url, [], false);
             }
             await Promise.all(content.entries.map(entry => {
                 links.add(entry.link);
@@ -31,13 +31,14 @@ export class Fetcher {
             }));
 
             if (!summery) {
-                summery = new Summary(content.link, content.title, []);
+                summery = new Summary(content.link, content.title, [], content.ok);
             } else {
                 summery.link = content.link;
                 summery.title = content.title;
+                summery.ok = content.ok;
             }
         } else {
-            content = new Content(summery.link, summery.title, []);
+            content = new Content(summery.link, summery.title, [], summery.ok);
         }
 
         for (const link of summery.catelog) {

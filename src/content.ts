@@ -22,9 +22,21 @@ function parseLink(link: any) {
     if (isString(link)) {
         ans = link;
     } else if (isArray(link) && link.length > 0) {
-        ans = link.reduce((a, b) => order(a.attr) > order(b.attr) ? a : b).attr.href;
-    } else if (link.attr) {
-        ans = link.attr.href;
+        ans = link.reduce((a, b) => order(a.__attr) > order(b.__attr) ? a : b).__attr.href;
+    } else if (link.__attr) {
+        ans = link.__attr.href;
+    }
+    return ans;
+}
+
+function extractText(content: any) {
+    let ans;
+    if (isString(content)) {
+        ans = content;
+    } else if (isString(content.__text)) {
+        ans = content.__text;
+    } else if (isString(content.__cdata)) {
+        ans = content.__cdata;
     }
     return ans;
 }
@@ -41,11 +53,7 @@ export class Entry {
     static fromDOM(dom: any, baseURL: string): Entry {
         let title;
         if (dom.title) {
-            if (isString(dom.title)) {
-                title = dom.title;
-            } else if (dom.title.text) {
-                title = dom.title.text;
-            }
+            title = extractText(dom.title);
         }
         if (!isString(title)) {
             throw new Error("Feed Format Error: Entry Missing Title");
@@ -54,27 +62,13 @@ export class Entry {
 
         let content;
         if (dom.content) {
-            if (isString(dom.content)) {
-                content = dom.content;
-            } else if (dom.content.text) {
-                content = dom.content.text;
-            }
+            content = extractText(dom.content);
         } else if (dom["content:encoded"]) {
-            content = dom["content:encoded"];
+            content = extractText(dom["content:encoded"]);
         } else if (dom.description) {
-            if (isString(dom.description)) {
-                content = dom.description;
-            } else if (isString(dom.description.text)) {
-                content = dom.description.text;
-            } else if (isString(dom.description.__cdata)) {
-                content = dom.description.__cdata;
-            }
+            content = extractText(dom.description);
         } else if (dom.summary) {
-            if (isString(dom.summary)) {
-                content = dom.summary;
-            } else if (isString(dom.summary.text)) {
-                content = dom.summary.text;
-            }
+            content = extractText(dom.summary);
         }
         if (!isString(content)) {
             throw new Error("Feed Format Error: Entry Missing Content");
@@ -132,16 +126,17 @@ export class Content {
         public link: string,
         public title: string,
         public entries: Entry[],
+        public ok: boolean = true,
     ) {}
 
     static fromXML(xml: string): Content {
         const dom = parser.parse(xml, {
             attributeNamePrefix: "",
-            attrNodeName: "attr",
-            textNodeName: "text",
+            attrNodeName: "__attr",
+            textNodeName: "__text",
+            cdataTagName: "__cdata",
             ignoreAttributes: false,
             parseAttributeValue: true,
-            cdataTagName: "__cdata"
         });
         let feed;
         if (dom.rss) {
@@ -163,13 +158,9 @@ export class Content {
 
         let title;
         if (feed.title) {
-            if (isString(feed.title)) {
-                title = feed.title;
-            } else if (isString(feed.title.text)) {
-                title = feed.title.text;
-            }
+            title = extractText(feed.title);
         } else if (feed.channel && feed.channel.title) {
-            title = feed.channel.title;
+            title = extractText(feed.channel.title);
         }
         if (!isString(title)) {
             throw new Error('Feed Format Error: Missing Title');
@@ -213,5 +204,6 @@ export class Summary {
         public link: string,
         public title: string,
         public catelog: string[],
+        public ok: boolean = true,
     ) {}
 }

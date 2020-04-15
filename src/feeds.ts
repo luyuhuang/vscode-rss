@@ -56,7 +56,16 @@ export class Feed extends vscode.TreeItem {
     ) {
         super(content.title);
         this.command = {command: 'rss.articles', title: 'articles', arguments: [feed]};
-        if (content.entries.length > 0 && content.entries.map(entry => !entry.read).reduce((a, b) => a || b)) {
+
+        const unread_num = content.entries.length === 0 ?
+            0 : content.entries.map(entry => Number(!entry.read)).reduce((a, b) => a + b);
+
+        if (unread_num > 0) {
+            this.label += ` (${unread_num})`;
+        }
+        if (!content.ok) {
+            this.iconPath = new vscode.ThemeIcon('error');
+        } else if (unread_num > 0) {
             this.iconPath = new vscode.ThemeIcon('circle-filled');
         }
     }
