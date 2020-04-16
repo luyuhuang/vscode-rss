@@ -35,8 +35,12 @@ function extractText(content: any) {
         ans = content;
     } else if (isString(content.__text)) {
         ans = content.__text;
-    } else if (isString(content.__cdata)) {
-        ans = content.__cdata;
+    } else if (content.__cdata) {
+        if (isString(content.__cdata)) {
+            ans = content.__cdata;
+        } else if(isArray(content.__cdata)) {
+            ans = content.__cdata.join('');
+        }
     }
     return ans;
 }
@@ -135,6 +139,7 @@ export class Content {
             attrNodeName: "__attr",
             textNodeName: "__text",
             cdataTagName: "__cdata",
+            cdataPositionChar: "",
             ignoreAttributes: false,
             parseAttributeValue: true,
         });

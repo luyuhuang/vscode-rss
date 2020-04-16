@@ -89,7 +89,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
     disposable = vscode.commands.registerCommand('rss.read', (entry: Entry) => {
         const panel = vscode.window.createWebviewPanel('rss', entry.title, vscode.ViewColumn.One, {});
-        panel.webview.html = '<style type="text/css">body{font-size:1em;}</style>' + entry.content;
+        const css = '<style type="text/css">body{font-size:1em;max-width:960px;margin:auto;}</style>';
+        panel.webview.html = css + entry.content;
         entry.read = true;
         article_list.refresh();
         feed_list.refresh();
