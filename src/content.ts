@@ -35,7 +35,7 @@ function extractText(content: any) {
         ans = content;
     } else if (isString(content.__text)) {
         ans = content.__text;
-    } else if (content.__cdata) {
+    } else if ('__cdata' in content) {
         if (isString(content.__cdata)) {
             ans = content.__cdata;
         } else if(isArray(content.__cdata)) {
@@ -56,7 +56,7 @@ export class Entry {
 
     static fromDOM(dom: any, baseURL: string): Entry {
         let title;
-        if (dom.title) {
+        if ('title' in dom) {
             title = extractText(dom.title);
         }
         if (!isString(title)) {
@@ -65,13 +65,13 @@ export class Entry {
         title = he.decode(title);
 
         let content;
-        if (dom.content) {
+        if ('content' in dom) {
             content = extractText(dom.content);
-        } else if (dom["content:encoded"]) {
+        } else if ("content:encoded" in dom) {
             content = extractText(dom["content:encoded"]);
-        } else if (dom.description) {
+        } else if ('description' in dom) {
             content = extractText(dom.description);
-        } else if (dom.summary) {
+        } else if ('summary' in dom) {
             content = extractText(dom.summary);
         }
         if (!isString(content)) {
@@ -162,9 +162,9 @@ export class Content {
         }
 
         let title;
-        if (feed.title) {
+        if ('title' in feed) {
             title = extractText(feed.title);
-        } else if (feed.channel && feed.channel.title) {
+        } else if (feed.channel?.title !== undefined) {
             title = extractText(feed.channel.title);
         }
         if (!isString(title)) {
@@ -175,7 +175,7 @@ export class Content {
         let link: any;
         if (feed.link) {
             link = parseLink(feed.link);
-        } else if (feed.channel && feed.channel.link) {
+        } else if (feed.channel?.link) {
             link = parseLink(feed.channel.link);
         }
         if (!isString(link)) {

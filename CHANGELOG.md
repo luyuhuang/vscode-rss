@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.1.0 (2020-04-16)
+
+- Fix some bugs
+- Optimize feed list
+- Add width limit
+
 ## v0.0.5 (2020-04-15)
 
 Fix a feed loading error on some pages.
