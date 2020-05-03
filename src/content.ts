@@ -54,7 +54,21 @@ export class Entry {
         public read: boolean,
     ) {}
 
-    static fromDOM(dom: any, baseURL: string): Entry {
+    static fromDOM(dom: any, baseURL: string, set: Set<string>): Entry | undefined {
+        let link;
+        if (dom.link) {
+            link = parseLink(dom.link);
+        } else if (dom.source) {
+            link = dom.source;
+        }
+        if (!isString(link)) {
+            throw new Error("Feed Format Error: Entry Missing Link");
+        }
+        link = new URL(link, baseURL).href;
+        if (set.has(link)) {
+            return undefined;
+        }
+
         let title;
         if ('title' in dom) {
             title = extractText(dom.title);
@@ -110,17 +124,6 @@ export class Entry {
         }
         date = new Date(date).getTime();
 
-        let link;
-        if (dom.link) {
-            link = parseLink(dom.link);
-        } else if (dom.source) {
-            link = dom.source;
-        }
-        if (!isString(link)) {
-            throw new Error("Feed Format Error: Entry Missing Link");
-        }
-        link = new URL(link, baseURL).href;
-
         return new Entry(title, content, date, link, false);
     }
 }
@@ -133,7 +136,7 @@ export class Content {
         public ok: boolean = true,
     ) {}
 
-    static fromXML(xml: string): Content {
+    static fromXML(xml: string, set: Set<string>): Content {
         const dom = parser.parse(xml, {
             attributeNamePrefix: "",
             attrNodeName: "__attr",
@@ -199,7 +202,13 @@ export class Content {
             throw new Error('Feed Format Error');
         }
 
-        const entries: Entry[] = items.map((item: any) => Entry.fromDOM(item, link));
+        const entries: Entry[] = [];
+        for (const item of items) {
+            const entry = Entry.fromDOM(item, link, set);
+            if (entry) {
+                entries.push(entry);
+            }
+        }
         return new Content(link, title, entries);
     }
 }

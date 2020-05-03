@@ -18,17 +18,17 @@ export class Fetcher {
             try {
                 const cfg = vscode.workspace.getConfiguration('rss');
                 const res = await got(url, {timeout: cfg.timeout * 1000, retry: cfg.retry});
-                content = Content.fromXML(res.body.toString());
+                content = Content.fromXML(res.body.toString(), new Set(summery?.catelog));
             } catch (error) {
                 vscode.window.showErrorMessage(error.toString());
                 content = new Content(summery?.link || url, summery?.title || url, [], false);
             }
-            await Promise.all(content.entries.map(entry => {
+            for (const entry of content.entries) {
                 links.add(entry.link);
                 const old: Entry = this.storage.get(entry.link, entry);
                 entry.read = old.read;
-                return this.storage.update(entry.link, entry);
-            }));
+                await this.storage.update(entry.link, entry);
+            }
 
             if (!summery) {
                 summery = new Summary(content.link, content.title, [], content.ok);

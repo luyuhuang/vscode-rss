@@ -132,6 +132,26 @@ export async function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(disposable);
 
+    disposable = vscode.commands.registerCommand('rss.add-feed', async () => {
+        let url: string | undefined = await vscode.window.showInputBox({prompt: 'Enter the feed URL'});
+        if (url === undefined) {return;}
+        const cfg = vscode.workspace.getConfiguration('rss');
+        cfg.feeds.push(url);
+        await cfg.update('feeds', cfg.feeds, true);
+    });
+    context.subscriptions.push(disposable);
+
+    disposable = vscode.commands.registerCommand('rss.remove-feed', async (feed: Feed) => {
+        const cfg = vscode.workspace.getConfiguration('rss');
+        await cfg.update('feeds', cfg.feeds.filter((e: string) => e !== feed.feed), true);
+        const summery: Summary | undefined = context.globalState.get(feed.feed);
+        for (const link of summery?.catelog || []) {
+            await context.globalState.update(link, undefined);
+        }
+        await context.globalState.update(feed.feed, undefined);
+    });
+    context.subscriptions.push(disposable);
+
     const do_refresh = () => vscode.commands.executeCommand('rss.refresh', true);
     const cfg = vscode.workspace.getConfiguration('rss');
     let timer = setInterval(do_refresh, cfg.interval * 1000);

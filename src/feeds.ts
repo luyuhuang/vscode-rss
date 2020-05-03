@@ -19,9 +19,7 @@ export class FeedList implements vscode.TreeDataProvider<Feed> {
 
     async fetch(update: boolean) {
         const cfg = vscode.workspace.getConfiguration('rss');
-        await Promise.all(cfg.feeds.map(async (feed: string) => {
-            await this.fetch_one(feed, update);
-        }));
+        await Promise.all(cfg.feeds.map((feed: string) => this.fetch_one(feed, update)));
     }
 
     refresh(): void {

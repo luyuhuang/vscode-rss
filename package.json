@@ -67,18 +67,12 @@
             {
                 "command": "rss.refresh",
                 "title": "Refresh",
-                "icon": {
-                    "light": "resources/light/refresh.svg",
-                    "dark": "resources/dark/refresh.svg"
-                }
+                "icon": "$(refresh)"
             },
             {
                 "command": "rss.refresh-one",
                 "title": "Refresh",
-                "icon": {
-                    "light": "resources/light/refresh.svg",
-                    "dark": "resources/dark/refresh.svg"
-                }
+                "icon": "$(refresh)"
             },
             {
                 "command": "rss.open-website",
@@ -99,6 +93,15 @@
             {
                 "command": "rss.set-all-read",
                 "title": "Set all to read"
+            },
+            {
+                "command": "rss.add-feed",
+                "title": "Add feed",
+                "icon": "$(add)"
+            },
+            {
+                "command": "rss.remove-feed",
+                "title": "Remove"
             }
         ],
         "viewsContainers": {
@@ -126,6 +129,11 @@
             "view/title": [
                 {
                     "command": "rss.refresh",
+                    "when": "view == rss-feeds",
+                    "group": "navigation"
+                },
+                {
+                    "command": "rss.add-feed",
                     "when": "view == rss-feeds",
                     "group": "navigation"
                 },
@@ -158,6 +166,10 @@
                 },
                 {
                     "command": "rss.open-website",
+                    "when": "view == rss-feeds"
+                },
+                {
+                    "command": "rss.remove-feed",
                     "when": "view == rss-feeds"
                 }
             ]
