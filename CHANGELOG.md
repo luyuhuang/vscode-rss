@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.2.0 (2020-05-03)
+
+- Add or remove feeds in the UI
+- Optimize performance
+
 ## v0.1.0 (2020-04-16)
 
 - Fix some bugs
