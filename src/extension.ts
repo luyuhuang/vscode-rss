@@ -134,7 +134,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     disposable = vscode.commands.registerCommand('rss.add-feed', async () => {
         let url: string | undefined = await vscode.window.showInputBox({prompt: 'Enter the feed URL'});
-        if (url === undefined) {return;}
+        if (url === undefined || url.length <= 0) {return;}
         const cfg = vscode.workspace.getConfiguration('rss');
         cfg.feeds.push(url);
         await cfg.update('feeds', cfg.feeds, true);

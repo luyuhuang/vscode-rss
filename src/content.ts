@@ -1,6 +1,7 @@
 import * as parser from "fast-xml-parser";
 import * as he from 'he';
 import * as cheerio from 'cheerio';
+import * as iconv from 'iconv-lite';
 import { URL } from "url";
 import { isString, isArray } from "util";
 
@@ -137,6 +138,8 @@ export class Content {
     ) {}
 
     static fromXML(xml: string, set: Set<string>): Content {
+        const match = xml.match(/<\?xml.*encoding="(\S+)".*\?>/);
+        xml = iconv.decode(Buffer.from(xml, 'binary'), match ? match[1]: 'utf-8');
         const dom = parser.parse(xml, {
             attributeNamePrefix: "",
             attrNodeName: "__attr",

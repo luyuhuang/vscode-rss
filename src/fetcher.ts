@@ -17,8 +17,8 @@ export class Fetcher {
             need_to_update = true;
             try {
                 const cfg = vscode.workspace.getConfiguration('rss');
-                const res = await got(url, {timeout: cfg.timeout * 1000, retry: cfg.retry});
-                content = Content.fromXML(res.body.toString(), new Set(summery?.catelog));
+                const res = await got(url, {timeout: cfg.timeout * 1000, retry: cfg.retry, encoding: 'binary'});
+                content = Content.fromXML(res.body, new Set(summery?.catelog));
             } catch (error) {
                 vscode.window.showErrorMessage(error.toString());
                 content = new Content(summery?.link || url, summery?.title || url, [], false);
