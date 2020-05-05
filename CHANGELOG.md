@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.2.1 (2020-05-05)
+
+Deal with different encodings
+
 ## v0.2.0 (2020-05-03)
 
 - Add or remove feeds in the UI
