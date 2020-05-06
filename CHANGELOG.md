@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.2.2 (2020-05-06)
+
+Fix the bug that some pictures are displayed out of proportion(close #3)
+
 ## v0.2.1 (2020-05-05)
 
 Deal with different encodings
