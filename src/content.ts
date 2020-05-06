@@ -107,6 +107,7 @@ export class Entry {
             if (src) {
                 $ele.attr('src', new URL(src, baseURL).href);
             }
+            $ele.removeAttr('height');
         });
         content = he.decode($.html());
 
