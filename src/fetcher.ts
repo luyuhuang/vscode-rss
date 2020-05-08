@@ -1,15 +1,35 @@
 import * as vscode from 'vscode';
 import got from 'got';
-import { Content, Entry, Summary, Abstract } from './content';
+import { Entry, Summary, Abstract } from './content';
 import { parseXML } from './parser';
 
 export class Fetcher {
     private storage: vscode.Memento;
-    constructor(context: vscode.ExtensionContext) {
+    private summaries: {[url: string]: Summary} = {};
+    private abstracts: {[link: string]: Abstract} = {};
+    private static instance: Fetcher;
+
+    private constructor(context: vscode.ExtensionContext) {
         this.storage = context.globalState;
     }
 
-    async fetch(url: string, update: boolean=true): Promise<Content> {
+    static initInstance(context: vscode.ExtensionContext) {
+        Fetcher.instance = new Fetcher(context);
+    }
+
+    static getInstance() {
+        return Fetcher.instance;
+    }
+
+    getSummary(url: string): Summary {
+        return this.summaries[url];
+    }
+
+    getAbstract(link: string): Abstract {
+        return this.abstracts[link];
+    }
+
+    async fetch(url: string, update: boolean=true) {
         const summary: Summary = this.storage.get(url, new Summary(url, url, [], false));
         const abstracts: Abstract[] = [];
         for (const link of summary.catelog) {
@@ -40,11 +60,19 @@ export class Fetcher {
                 abstracts.push(new Abstract(entry));
             }
 
+            abstracts.sort((a, b) => b.date - a.date);
             summary.catelog = abstracts.map(a => a.link);
             await this.storage.update(url, summary);
         }
 
-        abstracts.sort((a, b) => b.date - a.date);
-        return new Content(summary.link, summary.title, abstracts, summary.ok);
+        this.summaries[url] = summary;
+        for (const abstract of abstracts) {
+            this.abstracts[abstract.link] = abstract;
+        }
+    }
+
+    async fetch_all(update: boolean) {
+        const cfg = vscode.workspace.getConfiguration('rss');
+        await Promise.all(cfg.feeds.map((feed: string) => this.fetch(feed, update)));
     }
 }

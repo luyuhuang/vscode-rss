@@ -4,7 +4,7 @@ import * as cheerio from 'cheerio';
 import * as iconv from 'iconv-lite';
 import { URL } from "url";
 import { isString, isArray } from "util";
-import { Entry, Abstract, Content, Summary } from "./content";
+import { Entry, Summary } from "./content";
 
 function order(attr: any) {
     if (!attr) {

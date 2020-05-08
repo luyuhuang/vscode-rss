@@ -2,23 +2,27 @@ import * as vscode from 'vscode';
 import { FeedList, Feed } from './feeds';
 import { ArticleList, Article } from './articles';
 import { Fetcher } from './fetcher';
-import { Summary, Content, Entry, Abstract } from './content';
+import { Summary, Entry, Abstract } from './content';
+import { FavoritesList, Item } from './favorites';
 
 export async function activate(context: vscode.ExtensionContext) {
-    const fetcher = new Fetcher(context);
+    Fetcher.initInstance(context);
+    const fetcher = Fetcher.getInstance();
+    await fetcher.fetch_all(false);
 
-    const feed_list = new FeedList(fetcher);
-    await feed_list.fetch(false);
+    const feed_list = new FeedList();
     vscode.window.registerTreeDataProvider('rss-feeds', feed_list);
     const article_list = new ArticleList();
     vscode.window.registerTreeDataProvider('rss-articles', article_list);
+    const favorites_list = new FavoritesList();
+    vscode.window.registerTreeDataProvider('rss-favorites', favorites_list);
 
     let current_feed: string | undefined;
     let updating: boolean = false;
 
     let disposable = vscode.commands.registerCommand('rss.articles', (feed: string) => {
         current_feed = feed;
-        article_list.setArticles(feed_list.getContent(feed).abstracts);
+        article_list.setCatelog(fetcher.getSummary(feed).catelog);
     });
     context.subscriptions.push(disposable);
 
@@ -32,10 +36,10 @@ export async function activate(context: vscode.ExtensionContext) {
             title: "Updating RSS...",
             cancellable: false
         }, async () => {
-            await feed_list.fetch(true);
+            await fetcher.fetch_all(true);
             feed_list.refresh();
             if (current_feed) {
-                article_list.setArticles(feed_list.contents[current_feed].abstracts);
+                article_list.setCatelog(fetcher.getSummary(current_feed).catelog);
             }
             updating = false;
         });
@@ -43,7 +47,7 @@ export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(disposable);
 
     disposable = vscode.commands.registerCommand('rss.open-website', async (feed: Feed) => {
-        vscode.env.openExternal(vscode.Uri.parse(feed_list.getContent(feed.feed).link));
+        vscode.env.openExternal(vscode.Uri.parse(fetcher.getSummary(feed.feed).link));
     });
     context.subscriptions.push(disposable);
 
@@ -65,10 +69,10 @@ export async function activate(context: vscode.ExtensionContext) {
             title: "Updating RSS...",
             cancellable: false
         }, async () => {
-            await feed_list.fetch_one(url, true);
+            await fetcher.fetch(url, true);
             feed_list.refresh();
             if (current_feed) {
-                article_list.setArticles(feed_list.contents[current_feed].abstracts);
+                article_list.setCatelog(fetcher.getSummary(current_feed).catelog);
             }
             updating = false;
         });
@@ -86,6 +90,7 @@ export async function activate(context: vscode.ExtensionContext) {
         entry.read = true;
         article_list.refresh();
         feed_list.refresh();
+        favorites_list.refresh();
         context.globalState.update(entry.link, entry);
     });
     context.subscriptions.push(disposable);
@@ -102,6 +107,7 @@ export async function activate(context: vscode.ExtensionContext) {
         entry.read = true;
         feed_list.refresh();
         article_list.refresh();
+        favorites_list.refresh();
         context.globalState.update(entry.link, entry);
     });
     context.subscriptions.push(disposable);
@@ -113,6 +119,7 @@ export async function activate(context: vscode.ExtensionContext) {
         entry.read = false;
         feed_list.refresh();
         article_list.refresh();
+        favorites_list.refresh();
         context.globalState.update(entry.link, entry);
     });
     context.subscriptions.push(disposable);
@@ -123,7 +130,8 @@ export async function activate(context: vscode.ExtensionContext) {
             title: "Wait a moment...",
             cancellable: false
         }, async () => {
-            const abstracts = feed_list.getContent(feed.feed).abstracts;
+            const catelog = fetcher.getSummary(feed.feed).catelog;
+            const abstracts = catelog.map(link => fetcher.getAbstract(link));
             for (const abstract of abstracts) {
                 abstract.read = true;
                 const entry: Entry | undefined = context.globalState.get(abstract.link);
@@ -133,9 +141,8 @@ export async function activate(context: vscode.ExtensionContext) {
                 }
             }
             feed_list.refresh();
-            if (feed.feed === current_feed) {
-                article_list.setArticles(abstracts);
-            }
+            article_list.refresh();
+            favorites_list.refresh();
         });
     });
     context.subscriptions.push(disposable);
@@ -160,6 +167,25 @@ export async function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(disposable);
 
+    disposable = vscode.commands.registerCommand('rss.add-to-favorites', async (article: Article) => {
+        const cfg = vscode.workspace.getConfiguration('rss');
+        const name = await vscode.window.showQuickPick(cfg.favorites.map((e: any) => e.name));
+        const favorites = cfg.favorites.find((e: any) => e.name === name).list;
+        if (favorites.indexOf(article.abstract.link) < 0) {
+            favorites.push(article.abstract.link);
+            await cfg.update('favorites', cfg.favorites, true);
+        }
+    });
+    context.subscriptions.push(disposable);
+
+    disposable = vscode.commands.registerCommand('rss.remove-from-favorites', async (item: Item) => {
+        const cfg = vscode.workspace.getConfiguration('rss');
+        const favorites = cfg.favorites[item.index].list;
+        favorites.splice(favorites.indexOf(item.abstract.link), 1);
+        await cfg.update('favorites', cfg.favorites, true);
+    });
+    context.subscriptions.push(disposable);
+
     const do_refresh = () => vscode.commands.executeCommand('rss.refresh', true);
     const cfg = vscode.workspace.getConfiguration('rss');
     let timer = setInterval(do_refresh, cfg.interval * 1000);
@@ -173,8 +199,9 @@ export async function activate(context: vscode.ExtensionContext) {
             title: "Updating RSS...",
             cancellable: false
         }, async () => {
-            await feed_list.fetch(false);
+            await fetcher.fetch_all(false);
             feed_list.refresh();
+            favorites_list.refresh();
         });
     });
     context.subscriptions.push(disposable);

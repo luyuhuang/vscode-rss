@@ -38,6 +38,13 @@
                     "default": [],
                     "description": "A list of feeds"
                 },
+                "rss.favorites": {
+                    "type": "array",
+                    "default": [
+                        {"name": "Default", "list": []}
+                    ],
+                    "description": "A list of Favorites"
+                },
                 "rss.interval": {
                     "type": "integer",
                     "default": 3600,
@@ -102,6 +109,14 @@
             {
                 "command": "rss.remove-feed",
                 "title": "Remove"
+            },
+            {
+                "command": "rss.add-to-favorites",
+                "title": "Add to favorites"
+            },
+            {
+                "command": "rss.remove-from-favorites",
+                "title": "Remove from favorites"
             }
         ],
         "viewsContainers": {
@@ -122,6 +137,10 @@
                 {
                     "id": "rss-articles",
                     "name": "Articles"
+                },
+                {
+                    "id": "rss-favorites",
+                    "name": "Favorites"
                 }
             ]
         },
@@ -146,7 +165,7 @@
             "view/item/context": [
                 {
                     "command": "rss.open-link",
-                    "when": "view == rss-articles"
+                    "when": "view == rss-articles || view == rss-favorites"
                 },
                 {
                     "command": "rss.set-read",
@@ -155,6 +174,14 @@
                 {
                     "command": "rss.set-unread",
                     "when": "view == rss-articles"
+                },
+                {
+                    "command": "rss.add-to-favorites",
+                    "when": "view == rss-articles"
+                },
+                {
+                    "command": "rss.remove-from-favorites",
+                    "when": "view == rss-favorites"
                 },
                 {
                     "command": "rss.set-all-read",

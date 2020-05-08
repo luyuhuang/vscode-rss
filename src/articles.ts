@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { Entry, Abstract } from './content';
+import { Abstract } from './content';
+import { Fetcher } from './fetcher';
 
 export class ArticleList implements vscode.TreeDataProvider<Article> {
     private _onDidChangeTreeData: vscode.EventEmitter<Article | undefined> = new vscode.EventEmitter<Article | undefined>();
@@ -16,15 +17,15 @@ export class ArticleList implements vscode.TreeDataProvider<Article> {
     getChildren(element?: Article): Article[] {
         if (element) {return [];}
         const list = [];
-        for (const article of this.articles) {
-            list.push(new Article(article));
+        for (const link of this.catelog) {
+            list.push(new Article(Fetcher.getInstance().getAbstract(link)));
         }
         return list;
     }
 
-    public articles: Abstract[] = [];
-    setArticles(articles: Abstract[]): void{
-        this.articles = articles;
+    public catelog: string[] = [];
+    setCatelog(catelog: string[]): void{
+        this.catelog = catelog;
         this.refresh();
     }
 }
