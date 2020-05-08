@@ -22,16 +22,6 @@ export class Abstract {
     }
 }
 
-// export class Content {
-//     constructor(
-//         public link: string,
-//         public title: string,
-//         // public abstracts: Abstract[],
-//         public links: string[],
-//         public ok: boolean = true,
-//     ) {}
-// }
-
 export class Summary {
     constructor(
         public link: string,

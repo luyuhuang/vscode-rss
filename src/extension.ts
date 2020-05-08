@@ -170,6 +170,9 @@ export async function activate(context: vscode.ExtensionContext) {
     disposable = vscode.commands.registerCommand('rss.add-to-favorites', async (article: Article) => {
         const cfg = vscode.workspace.getConfiguration('rss');
         const name = await vscode.window.showQuickPick(cfg.favorites.map((e: any) => e.name));
+        if (name === undefined) {
+            return;
+        }
         const favorites = cfg.favorites.find((e: any) => e.name === name).list;
         if (favorites.indexOf(article.abstract.link) < 0) {
             favorites.push(article.abstract.link);

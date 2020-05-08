@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.3.0 (2020-05-08)
+
+- Support favorites
+- Prevent page refresh when hidden
+
 ## v0.2.2 (2020-05-06)
 
 Fix the bug that some pictures are displayed out of proportion(close #3)

@@ -12,6 +12,7 @@ VSCode-RSS is a Visual Studio Code extension that provides an embedded RSS reade
 
 - [x] Support multiple RSS formats;
 - [x] Automatic update;
+- [x] Support favorites;
 - [x] Simple configuration;
 - [x] Read / unread marks;
 - [x] Handling relative paths.
@@ -21,6 +22,7 @@ VSCode-RSS is a Visual Studio Code extension that provides an embedded RSS reade
 | Name | Type | Description |
 |:-----|:-----|:------------|
 | `rss.feeds` | `Array<string>` | RSS feed URLs |
+| `rss.favorites` | `Array<object>` | Favorites |
 | `rss.interval` | `integer` | Automatic refresh interval (s) |
 | `rss.timeout` | `integer` | Request timeout (s) |
 | `rss.retry` | `integer` | Request retries |
