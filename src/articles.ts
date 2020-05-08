@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Entry } from './content';
+import { Entry, Abstract } from './content';
 
 export class ArticleList implements vscode.TreeDataProvider<Article> {
     private _onDidChangeTreeData: vscode.EventEmitter<Article | undefined> = new vscode.EventEmitter<Article | undefined>();
@@ -22,8 +22,8 @@ export class ArticleList implements vscode.TreeDataProvider<Article> {
         return list;
     }
 
-    public articles: Entry[] = [];
-    setArticles(articles: Entry[]): void{
+    public articles: Abstract[] = [];
+    setArticles(articles: Abstract[]): void{
         this.articles = articles;
         this.refresh();
     }
@@ -31,13 +31,13 @@ export class ArticleList implements vscode.TreeDataProvider<Article> {
 
 export class Article extends vscode.TreeItem {
     constructor(
-        public entry: Entry
+        public abstract: Abstract
     ) {
-        super(entry.title);
+        super(abstract.title);
 
-        this.description = new Date(entry.date).toLocaleString();
-        this.command = {command: 'rss.read', title: 'Read', arguments: [entry]};
-        if (!entry.read) {
+        this.description = new Date(abstract.date).toLocaleString();
+        this.command = {command: 'rss.read', title: 'Read', arguments: [abstract]};
+        if (!abstract.read) {
             this.iconPath = new vscode.ThemeIcon('circle-outline');
         }
     }

@@ -55,8 +55,8 @@ export class Feed extends vscode.TreeItem {
         super(content.title);
         this.command = {command: 'rss.articles', title: 'articles', arguments: [feed]};
 
-        const unread_num = content.entries.length === 0 ?
-            0 : content.entries.map(entry => Number(!entry.read)).reduce((a, b) => a + b);
+        const unread_num = content.abstracts.length === 0 ?
+            0 : content.abstracts.map(abstract => Number(!abstract.read)).reduce((a, b) => a + b);
 
         if (unread_num > 0) {
             this.label += ` (${unread_num})`;

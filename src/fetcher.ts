@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import got from 'got';
-import { Content, Entry, Summary } from './content';
+import { Content, Entry, Summary, Abstract } from './content';
+import { parseXML } from './parser';
 
 export class Fetcher {
     private storage: vscode.Memento;
@@ -9,53 +10,41 @@ export class Fetcher {
     }
 
     async fetch(url: string, update: boolean=true): Promise<Content> {
-        let summery: Summary | undefined = this.storage.get(url);
-        const links = new Set<string>();
-        let need_to_update = false;
-        let content;
-        if (update || !summery) {
-            need_to_update = true;
+        const summary: Summary = this.storage.get(url, new Summary(url, url, [], false));
+        const abstracts: Abstract[] = [];
+        for (const link of summary.catelog) {
+            const entry: Entry | undefined = this.storage.get(link);
+            if (entry) {
+                abstracts.push(new Abstract(entry));
+            }
+        }
+
+        if (update || !summary.ok) {
+            let entries: Entry[];
             try {
                 const cfg = vscode.workspace.getConfiguration('rss');
                 const res = await got(url, {timeout: cfg.timeout * 1000, retry: cfg.retry, encoding: 'binary'});
-                content = Content.fromXML(res.body, new Set(summery?.catelog));
+                const obj = parseXML(res.body, new Set(summary.catelog));
+                entries = obj.entries;
+                summary.title = obj.summary.title;
+                summary.link = obj.summary.link;
+                summary.ok = true;
             } catch (error) {
                 vscode.window.showErrorMessage(error.toString());
-                content = new Content(summery?.link || url, summery?.title || url, [], false);
+                entries = [];
+                summary.ok = false;
             }
-            for (const entry of content.entries) {
-                links.add(entry.link);
-                const old: Entry = this.storage.get(entry.link, entry);
-                entry.read = old.read;
+
+            for (const entry of entries) {
                 await this.storage.update(entry.link, entry);
+                abstracts.push(new Abstract(entry));
             }
 
-            if (!summery) {
-                summery = new Summary(content.link, content.title, [], content.ok);
-            } else {
-                summery.link = content.link;
-                summery.title = content.title;
-                summery.ok = content.ok;
-            }
-        } else {
-            content = new Content(summery.link, summery.title, [], summery.ok);
+            summary.catelog = abstracts.map(a => a.link);
+            await this.storage.update(url, summary);
         }
 
-        for (const link of summery.catelog) {
-            if (links.has(link)) {
-                continue;
-            }
-            const entry: Entry | undefined = this.storage.get(link);
-            if (entry) {
-                content.entries.push(entry);
-            }
-        }
-        if (need_to_update) {
-            summery.catelog = content.entries.map(entry => entry.link);
-            await this.storage.update(url, summery);
-        }
-
-        content.entries.sort((a, b) => b.date - a.date);
-        return content;
+        abstracts.sort((a, b) => b.date - a.date);
+        return new Content(summary.link, summary.title, abstracts, summary.ok);
     }
 }
