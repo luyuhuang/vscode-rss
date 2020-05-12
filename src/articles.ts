@@ -16,11 +16,7 @@ export class ArticleList implements vscode.TreeDataProvider<Article> {
 
     getChildren(element?: Article): Article[] {
         if (element) {return [];}
-        const list = [];
-        for (const link of this.catelog) {
-            list.push(new Article(Fetcher.getInstance().getAbstract(link)));
-        }
-        return list;
+        return this.catelog.map(link => new Article(Fetcher.getInstance().getAbstract(link)));
     }
 
     public catelog: string[] = [];

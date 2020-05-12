@@ -121,7 +121,7 @@ function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | un
     return new Entry(title, content, date, link, false);
 }
 
-export function parseXML(xml: string, exclude: Set<string>) {
+export function parseXML(xml: string, exclude: Set<string>): [Entry[], Summary] {
     const match = xml.match(/<\?xml.*encoding="(\S+)".*\?>/);
     xml = iconv.decode(Buffer.from(xml, 'binary'), match ? match[1]: 'utf-8');
     const dom = parser.parse(xml, {
@@ -198,5 +198,5 @@ export function parseXML(xml: string, exclude: Set<string>) {
     }
     const summary = new Summary(link, title);
 
-    return {entries, summary};
+    return [entries, summary];
 }
