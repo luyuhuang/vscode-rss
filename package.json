@@ -165,7 +165,7 @@
             "view/item/context": [
                 {
                     "command": "rss.open-link",
-                    "when": "view == rss-articles || view == rss-favorites"
+                    "when": "viewItem == article"
                 },
                 {
                     "command": "rss.set-read",
@@ -181,7 +181,7 @@
                 },
                 {
                     "command": "rss.remove-from-favorites",
-                    "when": "view == rss-favorites"
+                    "when": "view == rss-favorites && viewItem == article"
                 },
                 {
                     "command": "rss.set-all-read",

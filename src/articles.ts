@@ -32,6 +32,7 @@ export class Article extends vscode.TreeItem {
     ) {
         super(abstract.title);
 
+        this.contextValue = "article";
         this.description = new Date(abstract.date).toLocaleString();
         this.command = {command: 'rss.read', title: 'Read', arguments: [abstract]};
         if (!abstract.read) {

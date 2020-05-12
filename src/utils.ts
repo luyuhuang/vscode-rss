@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
-import * as crypto from 'crypto';
 
 export function checkDir(context: vscode.ExtensionContext) {
     return new Promise(resolve => {

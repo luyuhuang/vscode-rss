@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { Fetcher } from './fetcher';
 import { Article } from './articles';
 import { Abstract } from './content';
-import { kMaxLength } from 'buffer';
 
 export class FavoritesList implements vscode.TreeDataProvider<vscode.TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<Article | undefined> = new vscode.EventEmitter<Article | undefined>();
