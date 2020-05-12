@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.3.1 (2020-05-12)
+
+- Modify the way articles are stored
+- Remove redundant menus in favorites
+
 ## v0.3.0 (2020-05-08)
 
 - Support favorites
