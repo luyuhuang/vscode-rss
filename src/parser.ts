@@ -117,6 +117,9 @@ function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | un
         throw new Error("Feed Format Error: Entry Missing Date");
     }
     date = new Date(date).getTime();
+    if (isNaN(date)) {
+        throw new Error("Feed Format Error: Invalid Date");
+    }
 
     return new Entry(title, content, date, link, false);
 }

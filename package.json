@@ -4,7 +4,7 @@
     "description": "A RSS reader embedded in Visual Studio Code",
     "license": "MIT",
     "icon": "logo.png",
-    "version": "0.3.1",
+    "version": "0.4.0",
     "publisher": "luyuhuang",
     "author": "luyuhuang",
     "homepage": "https://github.com/luyuhuang/vscode-rss.git",
@@ -33,17 +33,18 @@
         "configuration": {
             "title": "rss",
             "properties": {
-                "rss.feeds": {
-                    "type": "array",
-                    "default": [],
-                    "description": "A list of feeds"
-                },
-                "rss.favorites": {
-                    "type": "array",
-                    "default": [
-                        {"name": "Default", "list": []}
-                    ],
-                    "description": "A list of Favorites"
+                "rss.accounts": {
+                    "type": "object",
+                    "default": {
+                        "Default": {
+                            "type": "local",
+                            "feeds": [],
+                            "favorites": [
+                                {"name": "Default", "list": []}
+                            ]
+                        }
+                    },
+                    "description": "Feed accounts"
                 },
                 "rss.interval": {
                     "type": "integer",
@@ -64,6 +65,10 @@
         },
         "commands": [
             {
+                "command": "rss.select",
+                "title": "Select"
+            },
+            {
                 "command": "rss.articles",
                 "title": "Articles"
             },
@@ -73,6 +78,11 @@
             },
             {
                 "command": "rss.refresh",
+                "title": "Refresh",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "rss.refresh-account",
                 "title": "Refresh",
                 "icon": "$(refresh)"
             },
@@ -131,6 +141,10 @@
         "views": {
             "rss-reader": [
                 {
+                    "id": "rss-accounts",
+                    "name": "Accounts"
+                },
+                {
                     "id": "rss-feeds",
                     "name": "Feeds"
                 },
@@ -148,6 +162,11 @@
             "view/title": [
                 {
                     "command": "rss.refresh",
+                    "when": "view == rss-accounts",
+                    "group": "navigation"
+                },
+                {
+                    "command": "rss.refresh-account",
                     "when": "view == rss-feeds",
                     "group": "navigation"
                 },
@@ -163,6 +182,10 @@
                 }
             ],
             "view/item/context": [
+                {
+                    "command": "rss.refresh-account",
+                    "when": "view == rss-accounts"
+                },
                 {
                     "command": "rss.open-link",
                     "when": "viewItem == article"
@@ -211,15 +234,16 @@
         "test": "node ./out/test/runTest.js"
     },
     "devDependencies": {
-        "@types/vscode": "^1.40.0",
+        "@types/cheerio": "0.22.16",
         "@types/glob": "^7.1.1",
+        "@types/he": "^1.1.0",
         "@types/mocha": "^7.0.2",
         "@types/node": "^13.11.0",
-        "@types/he": "^1.1.0",
-        "@types/cheerio": "0.22.16",
-        "eslint": "^6.8.0",
-        "@typescript-eslint/parser": "^2.26.0",
+        "@types/sqlite3": "^3.1.6",
+        "@types/vscode": "^1.40.0",
         "@typescript-eslint/eslint-plugin": "^2.26.0",
+        "@typescript-eslint/parser": "^2.26.0",
+        "eslint": "^6.8.0",
         "glob": "^7.1.6",
         "mocha": "^7.1.1",
         "typescript": "^3.8.3",
@@ -230,6 +254,8 @@
         "fast-xml-parser": "^3.16.0",
         "got": "10.6.0",
         "he": "^1.2.0",
-        "iconv-lite": "^0.5.1"
+        "iconv-lite": "^0.5.1",
+        "sqlite": "^4.0.7",
+        "sqlite3": "^4.2.0"
     }
 }

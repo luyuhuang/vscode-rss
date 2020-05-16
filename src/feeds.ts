@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { Fetcher } from './fetcher';
 import { Summary } from './content';
+import { App } from './app';
 
 export class FeedList implements vscode.TreeDataProvider<Feed> {
     private _onDidChangeTreeData: vscode.EventEmitter<Feed | undefined> = new vscode.EventEmitter<Feed | undefined>();
@@ -19,9 +19,9 @@ export class FeedList implements vscode.TreeDataProvider<Feed> {
             return [];
         }
 
-        const cfg = vscode.workspace.getConfiguration('rss');
-        return cfg.feeds.map((feed: string) => {
-            const summary = Fetcher.getInstance().getSummary(feed);
+        const collection = App.instance.currCollection();
+        return collection.getFeeds().map(feed => {
+            const summary = collection.getSummary(feed)!;
             return new Feed(feed, summary);
         });
     }
@@ -30,13 +30,13 @@ export class FeedList implements vscode.TreeDataProvider<Feed> {
 export class Feed extends vscode.TreeItem {
     constructor(
         public feed: string,
-        summary: Summary,
+        public summary: Summary,
     ) {
         super(summary.title);
         this.command = {command: 'rss.articles', title: 'articles', arguments: [feed]};
 
         const unread_num = summary.catelog.length === 0 ? 0
-            : summary.catelog.map(link => Number(!Fetcher.getInstance().getAbstract(link).read))
+            : summary.catelog.map(link => Number(!App.instance.currCollection().getAbstract(link)?.read))
             .reduce((a, b) => a + b);
 
         if (unread_num > 0) {

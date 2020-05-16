@@ -9,16 +9,20 @@ export class Entry {
 }
 
 export class Abstract {
-    public title: string;
-    public date: number;
-    public link: string;
-    public read: boolean;
+    constructor(
+        public title: string,
+        public date: number,
+        public readonly link: string,
+        public read: boolean,
+        public feed: string
+    ) {}
 
-    constructor(entry: Entry) {
-        this.title = entry.title;
-        this.date = entry.date;
-        this.link = entry.link;
-        this.read = entry.read;
+    static fromEntry(entry: Entry, feed: string) {
+        return new Abstract(entry.title, entry.date, entry.link, entry.read, feed);
+    }
+
+    static fromArticle(article: Article) {
+        return new Abstract(article.title, article.date, article.link, article.read, article.feed);
     }
 }
 
@@ -29,4 +33,27 @@ export class Summary {
         public catelog: string[] = [],
         public ok: boolean = true,
     ) {}
+
+    static fromFeed(feed: Feed) {
+        return new Summary(feed.link, feed.title, [], feed.ok);
+    }
+}
+
+export interface Feed {
+    feed: string,
+    account: string,
+
+    link: string,
+    title: string,
+    ok: boolean
+}
+
+export interface Article {
+    link: string,
+    feed: string,
+    account: string,
+
+    title: string,
+    date: number,
+    read: boolean
 }

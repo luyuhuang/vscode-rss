@@ -1,10 +1,7 @@
 import * as fs from 'fs';
-import * as vscode from 'vscode';
 
-export function checkDir(context: vscode.ExtensionContext) {
-    return new Promise(resolve => {
-        fs.mkdir(context.globalStoragePath, resolve);
-    });
+export function checkDir(path: string) {
+    return new Promise(resolve => fs.mkdir(path, resolve));
 }
 
 export function writeFile(path: string, data: string) {
@@ -20,6 +17,30 @@ export function readFile(path: string) {
                 reject(err);
             } else {
                 resolve(data.toString('utf-8'));
+            }
+        });
+    });
+}
+
+export function moveFile(oldPath: string, newPath: string) {
+    return new Promise((resolve, reject)=> {
+        fs.rename(oldPath, newPath, (err) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
+export function readDir(path: string) {
+    return new Promise<string[]>((resolve, reject) => {
+        fs.readdir(path, (err, files) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(files);
             }
         });
     });
