@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as sqlite from 'sqlite';
 import { App } from './app';
 
 export class AccountList implements vscode.TreeDataProvider<vscode.TreeItem> {
@@ -18,13 +17,13 @@ export class AccountList implements vscode.TreeDataProvider<vscode.TreeItem> {
         if (element) {
             return [];
         }
-        return Object.keys(App.instance.collections).map(name => new Account(name));
+        return Object.keys(App.instance.collections).map(key => new Account(key));
     }
 }
 
 export class Account extends vscode.TreeItem {
-    constructor(public name: string) {
-        super(name);
-        this.command = {command: 'rss.select', title: 'select', arguments: [name]};
+    constructor(public key: string) {
+        super(App.instance.collections[key].name);
+        this.command = {command: 'rss.select', title: 'select', arguments: [key]};
     }
 }

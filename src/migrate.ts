@@ -5,6 +5,7 @@ import { Summary, Entry, Abstract } from './content';
 import { writeFile, readDir, checkDir, moveFile } from './utils';
 import * as sqlite3 from 'sqlite3';
 import { open as openDB } from 'sqlite';
+import * as uuid from 'uuid';
 
 export async function migrate(context: vscode.ExtensionContext) {
     const version: string = vscode.extensions.getExtension('luyuhuang.rss')!.packageJSON.version;
@@ -85,9 +86,10 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
         `);
 
         const cfg = vscode.workspace.getConfiguration('rss');
-        const name = 'Default';
+        const key = uuid.v1();
         await cfg.update('accounts', {
-            [name]: {
+            [key]: {
+                name: 'Default',
                 type: 'local',
                 feeds: cfg.get('feeds', []),
                 favorites: cfg.get('favorites', [
@@ -102,7 +104,7 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
         for (const url in summaries) {
             const summary = summaries[url];
             await database.run('insert into feeds values(?,?,?,?,?)',
-                             url, name, summary.link, summary.title, summary.ok);
+                             url, key, summary.link, summary.title, summary.ok);
 
             for (const link of summary.catelog) {
                 const abstract = abstracts[link];
@@ -111,19 +113,19 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
                 }
                 try {
                     await database.run('insert into articles values(?,?,?,?,?,?)',
-                                     link, url, name,
+                                     link, url, key,
                                      abstract.title, abstract.date, abstract.read);
                 } catch(e) {}
             }
         }
 
-        await checkDir(pathJoin(root, name));
+        await checkDir(pathJoin(root, key));
         const files = await readDir(root);
         for (const file of files) {
-            if (file === name || file === 'rss.db') {
+            if (file === key || file === 'rss.db') {
                 continue;
             }
-            await moveFile(pathJoin(root, file), pathJoin(root, name, file));
+            await moveFile(pathJoin(root, file), pathJoin(root, key, file));
         }
 
         // await context.globalState.update('summaries', undefined);

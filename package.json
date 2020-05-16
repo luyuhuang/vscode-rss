@@ -35,15 +35,7 @@
             "properties": {
                 "rss.accounts": {
                     "type": "object",
-                    "default": {
-                        "Default": {
-                            "type": "local",
-                            "feeds": [],
-                            "favorites": [
-                                {"name": "Default", "list": []}
-                            ]
-                        }
-                    },
+                    "default": {},
                     "description": "Feed accounts"
                 },
                 "rss.interval": {
@@ -240,6 +232,7 @@
         "@types/mocha": "^7.0.2",
         "@types/node": "^13.11.0",
         "@types/sqlite3": "^3.1.6",
+        "@types/uuid": "^7.0.3",
         "@types/vscode": "^1.40.0",
         "@typescript-eslint/eslint-plugin": "^2.26.0",
         "@typescript-eslint/parser": "^2.26.0",
@@ -256,6 +249,7 @@
         "he": "^1.2.0",
         "iconv-lite": "^0.5.1",
         "sqlite": "^4.0.7",
-        "sqlite3": "^4.2.0"
+        "sqlite3": "^4.2.0",
+        "uuid": "^8.0.0"
     }
 }

@@ -32,11 +32,15 @@ export abstract class Collection {
     }
 
     protected get cfg() {
-        return vscode.workspace.getConfiguration('rss').accounts[this.account];
+        return App.cfg.accounts[this.account];
+    }
+
+    public get name() {
+        return this.cfg.name;
     }
 
     protected async updateCfg() {
-        const cfg = vscode.workspace.getConfiguration('rss');
+        const cfg = App.cfg;
         await cfg.update('accounts', cfg.accounts, true);
     }
 
@@ -224,7 +228,7 @@ export class LocalCollection extends Collection {
 
         let entries: Entry[];
         try {
-            const cfg = vscode.workspace.getConfiguration('rss');
+            const cfg = App.cfg;
             const res = await got(url, {timeout: cfg.timeout * 1000, retry: cfg.retry, encoding: 'binary'});
             const [e, s] = parseXML(res.body, new Set(summary.catelog));
             entries = e;

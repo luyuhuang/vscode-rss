@@ -9,11 +9,13 @@ import { FeedList, Feed } from './feeds';
 import { ArticleList, Article } from './articles';
 import { FavoritesList, Item } from './favorites';
 import { Abstract } from './content';
+import * as uuid from 'uuid';
+import { stringify } from 'querystring';
 
 export class App {
     private static _instance?: App;
 
-    private current_account: string;
+    private current_account?: string;
     private current_feed?: string;
     private updating = false;
 
@@ -22,41 +24,71 @@ export class App {
     private article_list = new ArticleList();
     private favorites_list = new FavoritesList();
 
-    public collections: {[name: string]:collection.Collection} = {};
-    public readonly root: string;
+    public collections: {[key: string]:collection.Collection} = {};
+    public readonly root: string = this.context.globalStoragePath;
     private database?: Database;
 
     private constructor(
         private context: vscode.ExtensionContext
-    ) {
-        this.root = context.globalStoragePath;
+    ) {}
 
-        this.initAccounts();
-        this.current_account = Object.keys(this.collections)[0];
-    }
-
-    private initAccounts() {
-        const cfg = vscode.workspace.getConfiguration('rss');
-        const names = Object.keys(cfg.accounts);
-        for (const name of names) {
-            if (this.collections[name]) {
+    private async initAccounts() {
+        let keys = Object.keys(App.cfg.accounts);
+        if (keys.length <= 0) {
+            await this.createLocalAccount('Default');
+            keys = Object.keys(App.cfg.accounts);
+        }
+        for (const key of keys) {
+            if (this.collections[key]) {
                 continue;
             }
-            const account = cfg.accounts[name];
-            const dir = pathJoin(this.root, name);
+            const account = App.cfg.accounts[key];
+            const dir = pathJoin(this.root, key);
             let c: collection.Collection;
             switch (account.type) {
                 case 'local':
-                    c = new collection.LocalCollection(dir, name);
+                    c = new collection.LocalCollection(dir, key);
                     break;
                 case 'ttrss':
-                    c = new collection.TTRSSCollection(dir, name);
+                    c = new collection.TTRSSCollection(dir, key);
                     break;
                 default:
                     throw new Error(`Unknown account type: ${account.type}`);
             }
-            this.collections[name] = c;
+            await c.init();
+            this.collections[key] = c;
         }
+        for (const key in this.collections) {
+            if (!(key in App.cfg.accounts)) {
+                delete this.collections[key];
+            }
+        }
+    }
+
+    private async createLocalAccount(name: string) {
+        const key = uuid.v1();
+        const accounts: {[key: string]: any} = {
+            [key]: {
+                name: name,
+                type: 'local',
+                feeds: [],
+                favorites: [
+                    {"name": "Default", "list": []}
+                ]
+            }
+        };
+        const cfg = App.cfg;
+        if (Object.keys(cfg.accounts).length <= 0) {
+            this.current_account = key;
+        }
+        for (const key in cfg.accounts) {
+            accounts[key] = cfg.accounts[key];
+        }
+        await cfg.update('accounts', accounts, true);
+    }
+
+    private async removeAccount() {
+
     }
 
     async init() {
@@ -64,7 +96,8 @@ export class App {
         this.database = await openDB({
             filename: pathJoin(this.root, 'rss.db'), driver: sqlite3.Database
         });
-        await Promise.all(Object.values(this.collections).map(c => c.init()));
+        await this.initAccounts();
+        this.current_account = Object.keys(this.collections)[0];
     }
 
     static async initInstance(context: vscode.ExtensionContext) {
@@ -80,12 +113,16 @@ export class App {
         return App.instance.database!;
     }
 
+    static get cfg() {
+        return vscode.workspace.getConfiguration('rss');
+    }
+
     get db(): Database {
         return this.database!;
     }
 
     currCollection() {
-        return this.collections[this.current_account];
+        return this.collections[this.current_account!];
     }
 
     currArticles() {
@@ -132,8 +169,8 @@ export class App {
         }
     }
 
-    rss_select(name: string) {
-        this.current_account = name;
+    rss_select(account: string) {
+        this.current_account = account;
         this.current_feed = undefined;
         this.feed_list.refresh();
         this.article_list.refresh();
@@ -220,7 +257,7 @@ export class App {
             cancellable: false
         }, async () => {
             const collection = account ?
-                this.collections[account.name] : this.currCollection();
+                this.collections[account.key] : this.currCollection();
             await collection.fetchAll(true);
             this.feed_list.refresh();
             this.article_list.refresh();
@@ -284,23 +321,26 @@ export class App {
 
     initEvents() {
         const do_refresh = () => vscode.commands.executeCommand('rss.refresh', true);
-        const cfg = vscode.workspace.getConfiguration('rss');
-        let timer = setInterval(do_refresh, cfg.interval * 1000);
+        let timer = setInterval(do_refresh, App.cfg.interval * 1000);
 
         const disposable = vscode.workspace.onDidChangeConfiguration(async (e) => {
+            if (this.updating) {
+                return;
+            }
+            this.updating = true;
             clearInterval(timer);
-            const cfg = vscode.workspace.getConfiguration('rss');
-            timer = setInterval(do_refresh, cfg.interval * 1000);
+            timer = setInterval(do_refresh, App.cfg.interval * 1000);
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
                 title: "Updating RSS...",
                 cancellable: false
             }, async () => {
-                this.initAccounts();
+                await this.initAccounts();
                 await Promise.all(Object.values(this.collections).map(c => c.fetchAll(false)));
                 this.account_list.refresh();
                 this.feed_list.refresh();
                 this.favorites_list.refresh();
+                this.updating = false;
             });
         });
         this.context.subscriptions.push(disposable);
