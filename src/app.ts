@@ -63,32 +63,50 @@ export class App {
                 delete this.collections[key];
             }
         }
+        if (this.current_account === undefined || !(this.current_account in this.collections)) {
+            this.current_account = Object.keys(this.collections)[0];
+        }
     }
 
     private async createLocalAccount(name: string) {
-        const key = uuid.v1();
-        const accounts: {[key: string]: any} = {
-            [key]: {
-                name: name,
-                type: 'local',
-                feeds: [],
-                favorites: [
-                    {"name": "Default", "list": []}
-                ]
-            }
+        const accounts = App.cfg.get<any>('accounts');
+        accounts[uuid.v1()] = {
+            name: name,
+            type: 'local',
+            feeds: [],
+            favorites: [
+                {"name": "Default", "list": []}
+            ]
         };
-        const cfg = App.cfg;
-        if (Object.keys(cfg.accounts).length <= 0) {
-            this.current_account = key;
-        }
-        for (const key in cfg.accounts) {
-            accounts[key] = cfg.accounts[key];
-        }
-        await cfg.update('accounts', accounts, true);
+        await App.cfg.update('accounts', accounts, true);
     }
 
-    private async removeAccount() {
+    private async createTTRSSAccount(name: string, server: string, username: string, password: string) {
+        const accounts = App.cfg.get<any>('accounts');
+        accounts[uuid.v1()] = {
+            name: name,
+            type: 'ttrss',
+            server,
+            username,
+            password,
+            favorites: [
+                {"name": "Default", "list": []}
+            ]
+        };
+        await App.cfg.update('accounts', accounts, true);
+    }
 
+    private async removeAccount(key: string) {
+        const collection = this.collections[key];
+        if (collection === undefined) {
+            return;
+        }
+        await collection.clean();
+        delete this.collections[key];
+
+        const accounts = App.cfg.get<any>('accounts');
+        delete accounts[key];
+        await App.cfg.update('accounts', accounts, true);
     }
 
     async init() {
@@ -97,7 +115,6 @@ export class App {
             filename: pathJoin(this.root, 'rss.db'), driver: sqlite3.Database
         });
         await this.initAccounts();
-        this.current_account = Object.keys(this.collections)[0];
     }
 
     static async initInstance(context: vscode.ExtensionContext) {
@@ -160,6 +177,9 @@ export class App {
             ['rss.remove-feed', this.rss_remove_feed],
             ['rss.add-to-favorites', this.rss_add_to_favorites],
             ['rss.remove-from-favorites', this.rss_remove_from_favorites],
+            ['rss.new-account', this.rss_new_account],
+            ['rss.del-account', this.rss_del_account],
+            ['rss.account-rename', this.rss_account_rename],
         ];
 
         for (const [cmd, handler] of commands) {
@@ -317,6 +337,40 @@ export class App {
 
     async rss_remove_from_favorites(item: Item) {
         await this.currCollection().removeFromFavorites(item.abstract.link, item.index);
+    }
+
+    async rss_new_account() {
+        const type = await vscode.window.showQuickPick(['local', 'ttrss'], {placeHolder: "Select account type"});
+        if (type === undefined) {return;}
+        const name = await vscode.window.showInputBox({prompt: 'Enter the name'});
+        if (name === undefined || name.length <= 0) {return;}
+        if (type === 'local') {
+            await this.createLocalAccount(name);
+        } else if (type === 'ttrss') {
+            const server = await vscode.window.showInputBox({prompt: 'Enter server URL'});
+            if (server === undefined || server.length <= 0) {return;}
+            const username = await vscode.window.showInputBox({prompt: 'Enter user name'});
+            if (username === undefined || username.length <= 0) {return;}
+            const password = await vscode.window.showInputBox({prompt: 'Enter password', password: true});
+            if (password === undefined || password.length <= 0) {return;}
+            await this.createTTRSSAccount(name, server, username, password);
+        }
+    }
+
+    async rss_del_account(account: Account) {
+        const confirm = await vscode.window.showQuickPick(['no', 'yes'], {placeHolder: "Are you sure to delete?"});
+        if (confirm !== 'yes') {
+            return;
+        }
+        await this.removeAccount(account.key);
+    }
+
+    async rss_account_rename(account: Account) {
+        const name = await vscode.window.showInputBox({prompt: 'Enter the name'});
+        if (name === undefined || name.length <= 0) {return;}
+        const accounts = App.cfg.get<any>('accounts');
+        accounts[account.key].name = name;
+        await App.cfg.update('accounts', accounts, true);
     }
 
     initEvents() {

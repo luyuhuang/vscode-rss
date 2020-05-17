@@ -61,6 +61,19 @@
                 "title": "Select"
             },
             {
+                "command": "rss.new-account",
+                "title": "New account",
+                "icon": "$(add)"
+            },
+            {
+                "command": "rss.del-account",
+                "title": "Delete account"
+            },
+            {
+                "command": "rss.account-rename",
+                "title": "Rename"
+            },
+            {
                 "command": "rss.articles",
                 "title": "Articles"
             },
@@ -158,6 +171,11 @@
                     "group": "navigation"
                 },
                 {
+                    "command": "rss.new-account",
+                    "when": "view == rss-accounts",
+                    "group": "navigation"
+                },
+                {
                     "command": "rss.refresh-account",
                     "when": "view == rss-feeds",
                     "group": "navigation"
@@ -176,6 +194,14 @@
             "view/item/context": [
                 {
                     "command": "rss.refresh-account",
+                    "when": "view == rss-accounts"
+                },
+                {
+                    "command": "rss.del-account",
+                    "when": "view == rss-accounts"
+                },
+                {
+                    "command": "rss.account-rename",
                     "when": "view == rss-accounts"
                 },
                 {

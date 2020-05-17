@@ -51,3 +51,15 @@ export function removeFile(path: string) {
         fs.unlink(path, resolve);
     });
 }
+
+export function removeDir(path: string) {
+    return new Promise(resolve => {
+        fs.rmdir(path, resolve);
+    });
+}
+
+export function fileExists(path: string) {
+    return new Promise(resolve => {
+        fs.exists(path, resolve);
+    });
+}

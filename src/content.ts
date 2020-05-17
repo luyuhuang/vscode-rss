@@ -14,7 +14,8 @@ export class Abstract {
         public date: number,
         public readonly link: string,
         public read: boolean,
-        public feed: string
+        public feed: string,
+        public article_id?: number,
     ) {}
 
     static fromEntry(entry: Entry, feed: string) {
@@ -22,7 +23,8 @@ export class Abstract {
     }
 
     static fromArticle(article: Article) {
-        return new Abstract(article.title, article.date, article.link, article.read, article.feed);
+        return new Abstract(article.title, article.date, article.link,
+                            article.read, article.feed, article.article_id);
     }
 }
 
@@ -32,10 +34,11 @@ export class Summary {
         public title: string,
         public catelog: string[] = [],
         public ok: boolean = true,
+        public feed_id?: number,
     ) {}
 
     static fromFeed(feed: Feed) {
-        return new Summary(feed.link, feed.title, [], feed.ok);
+        return new Summary(feed.link, feed.title, [], feed.ok, feed.feed_id);
     }
 }
 
@@ -43,6 +46,7 @@ export interface Feed {
     feed: string,
     account: string,
 
+    feed_id?: number,
     link: string,
     title: string,
     ok: boolean
@@ -53,6 +57,7 @@ export interface Article {
     feed: string,
     account: string,
 
+    article_id?: number,
     title: string,
     date: number,
     read: boolean

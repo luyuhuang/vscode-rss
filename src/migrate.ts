@@ -14,7 +14,7 @@ export async function migrate(context: vscode.ExtensionContext) {
         const v = VERSIONS[i];
         await alter[v](context);
     }
-    // await context.globalState.update('version', version);
+    await context.globalState.update('version', version);
 }
 
 const VERSIONS = ['0.3.1', '0.4.0'];
@@ -64,6 +64,7 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
             feed text,
             account text,
 
+            feed_id integer,
             link text not null,
             title text not null,
             ok boolean not null default 0,
@@ -77,6 +78,7 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
             feed text,
             account text,
 
+            article_id integer,
             title text not null,
             date integer not null,
             read boolean not null default 0,
@@ -103,8 +105,8 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
 
         for (const url in summaries) {
             const summary = summaries[url];
-            await database.run('insert into feeds values(?,?,?,?,?)',
-                             url, key, summary.link, summary.title, summary.ok);
+            await database.run('insert into feeds values(?,?,?,?,?,?)',
+                             url, key, summary.feed_id, summary.link, summary.title, summary.ok);
 
             for (const link of summary.catelog) {
                 const abstract = abstracts[link];
@@ -112,9 +114,9 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
                     continue;
                 }
                 try {
-                    await database.run('insert into articles values(?,?,?,?,?,?)',
+                    await database.run('insert into articles values(?,?,?,?,?,?,?)',
                                      link, url, key,
-                                     abstract.title, abstract.date, abstract.read);
+                                     abstract.article_id, abstract.title, abstract.date, abstract.read);
                 } catch(e) {}
             }
         }
@@ -128,7 +130,7 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
             await moveFile(pathJoin(root, file), pathJoin(root, key, file));
         }
 
-        // await context.globalState.update('summaries', undefined);
-        // await context.globalState.update('abstracts', undefined);
+        await context.globalState.update('summaries', undefined);
+        await context.globalState.update('abstracts', undefined);
     }
 };

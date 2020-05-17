@@ -4,13 +4,14 @@ import got from 'got';
 import { parseXML } from './parser';
 import { Entry, Summary, Abstract, Feed, Article } from './content';
 import { App } from './app';
-import { checkDir, writeFile, readFile, removeFile } from './utils';
+import { checkDir, writeFile, readFile, removeFile, removeDir, fileExists } from './utils';
+import { resolveNaptr } from 'dns';
 
 export abstract class Collection {
     private summaries: {[url: string]: Summary} = {};
     private abstracts: {[link: string]: Abstract} = {};
-    private dirty_summaries = new Map<string, 'add' | 'up' | 'del'>();
-    private dirty_abstracts = new Map<string, 'add' | 'up' | 'del'>();
+    protected dirty_summaries = new Map<string, 'add' | 'up' | 'del'>();
+    protected dirty_abstracts = new Map<string, 'add' | 'up' | 'del'>();
 
     constructor(
         protected dir: string,
@@ -31,7 +32,7 @@ export abstract class Collection {
         }
     }
 
-    protected get cfg() {
+    protected get cfg(): Account {
         return App.cfg.accounts[this.account];
     }
 
@@ -87,7 +88,7 @@ export abstract class Collection {
         return list;
     }
 
-    getFavorites() {
+    getFavorites(): Favorites[] {
         return this.cfg.favorites;
     }
 
@@ -111,7 +112,9 @@ export abstract class Collection {
             if (this.getAbstract(link) === undefined) {
                 this.dirty_abstracts.set(link, 'add');
             } else {
-                this.dirty_abstracts.set(link, 'up');
+                if (this.dirty_abstracts.get(link) !== 'add') {
+                    this.dirty_abstracts.set(link, 'up');
+                }
             }
             this.abstracts[link] = abstract;
         }
@@ -128,7 +131,9 @@ export abstract class Collection {
             if (this.getSummary(feed) === undefined) {
                 this.dirty_summaries.set(feed, 'add');
             } else {
-                this.dirty_summaries.set(feed, 'up');
+                if (this.dirty_summaries.get(feed) !== 'add') {
+                    this.dirty_summaries.set(feed, 'up');
+                }
             }
             this.summaries[feed] = summary;
         }
@@ -161,13 +166,13 @@ export abstract class Collection {
         for (const [feed, op] of this.dirty_summaries) {
             const summary = this.getSummary(feed)!;
             if (op === 'add') {
-                await App.db.run('insert into feeds values(?,?,?,?,?)',
+                await App.db.run('insert into feeds values(?,?,?,?,?,?)',
                                  feed, this.account,
-                                 summary.link, summary.title, summary.ok);
+                                 summary.feed_id, summary.link, summary.title, summary.ok);
             } else if (op === 'up') {
-                await App.db.run('update feeds set link = ?, title = ?, ok = ? '+
+                await App.db.run('update feeds set feed_id = ?, link = ?, title = ?, ok = ? '+
                                  'where feed = ? and account = ?',
-                                 summary.link, summary.title, summary.ok,
+                                 summary.feed_id, summary.link, summary.title, summary.ok,
                                  feed, this.account);
             } else if (op === 'del') {
                 await App.db.run('delete from feeds where feed = ? and account = ?',
@@ -179,13 +184,13 @@ export abstract class Collection {
         for (const [link, op] of this.dirty_abstracts) {
             const abstract = this.getAbstract(link)!;
             if (op === 'add') {
-                await App.db.run('insert into articles values(?,?,?,?,?,?)',
+                await App.db.run('insert into articles values(?,?,?,?,?,?,?)',
                                  link, abstract.feed, this.account,
-                                 abstract.title, abstract.date, abstract.read);
+                                 abstract.article_id, abstract.title, abstract.date, abstract.read);
             } else if (op === 'up') {
-                await App.db.run('update articles set title = ?, date = ?, read = ? '+
+                await App.db.run('update articles set article_id = ?, title = ?, date = ?, read = ? '+
                                  'where link = ? and feed = ? and account = ?',
-                                 abstract.title, abstract.date, abstract.read,
+                                 abstract.article_id, abstract.title, abstract.date, abstract.read,
                                  link, abstract.feed, this.account);
             } else if (op === 'del') {
                 await App.db.run('delete from articles where link = ? and account = ?',
@@ -195,13 +200,24 @@ export abstract class Collection {
         this.dirty_abstracts.clear();
     }
 
-    abstract async fetch(url: string, update: boolean): Promise<void>;
+    async clean() {
+        for (const feed in this.summaries) {
+            await this.removeSummary(feed);
+        }
+        await removeDir(this.dir);
+        await this.commit();
+    }
+
     abstract async fetchAll(update: boolean): Promise<void>;
     abstract async fetchOne(url: string, update: boolean): Promise<void>;
 
 }
 
 export class LocalCollection extends Collection {
+    protected get cfg(): LocalAccount {
+        return super.cfg as LocalAccount;
+    }
+
     async addFeed(feed: string) {
         this.cfg.feeds.push(feed);
         await this.updateCfg();
@@ -212,7 +228,7 @@ export class LocalCollection extends Collection {
         await this.updateCfg();
     }
 
-    async fetch(url: string, update: boolean) {
+    private async fetch(url: string, update: boolean) {
         const summary = this.getSummary(url) || new Summary(url, url, [], false);
         if (!update && summary.ok) {
             return;
@@ -272,16 +288,251 @@ export class LocalCollection extends Collection {
 }
 
 export class TTRSSCollection extends Collection {
-    addFeed(feed: string): Promise<void> {
-        throw new Error("Method not implemented.");
+    private session_id?: string;
+
+    protected get cfg(): TTRSSAccount {
+        return super.cfg as TTRSSAccount;
     }
-    delFeed(feed: string): Promise<void> {
-        throw new Error("Method not implemented.");
+
+    async init() {
+        await super.init();
     }
-    async fetch(url: string, update: boolean) {
+
+    private async login() {
+        const cfg = this.cfg;
+        const res = await got({
+            url: cfg.server,
+            method: 'POST',
+            json: {
+                op: "login",
+                user: cfg.username,
+                password: cfg.password,
+            },
+            timeout: App.cfg.timeout * 1000,
+            retry: App.cfg.retry,
+        });
+        const response = JSON.parse(res.body);
+        if (response.status !== 0) {
+            throw Error(`Login failed: ${response.content.error}`);
+        }
+        this.session_id = response.content.session_id;
     }
+
+    async addFeed(feed: string) {
+    }
+
+    async delFeed(feed: string) {
+    }
+
+    private async fetch(url: string, update: boolean) {
+        const summary = this.getSummary(url);
+        if (summary === undefined || summary.feed_id === undefined) {
+            throw Error('Feed dose not exist');
+        }
+        if (!update && summary.ok) {
+            return;
+        }
+
+        if (this.session_id === undefined) {
+            await this.login();
+        }
+        const res = await got({
+            url: this.cfg.server,
+            method: 'POST',
+            json: {
+                op: 'getHeadlines',
+                sid: this.session_id,
+                feed_id: summary.feed_id,
+            },
+            timeout: App.cfg.timeout * 1000,
+            retry: App.cfg.retry
+        });
+        const response = JSON.parse(res.body);
+        if (response.status !== 0) {
+            if (response.content.error === 'NOT_LOGGED_IN') {
+                this.session_id = undefined;
+                await this.fetch(url, update);
+                return;
+            } else {
+                throw Error(`Get feeds failed: ${response.content.error}`);
+            }
+        }
+        const headlines = response.content as any[];
+        const abstracts = [];
+        for (const h of headlines) {
+            const abstract = new Abstract(h.title, h.updated * 1000, h.link, !h.unread, url, h.id);
+            abstracts.push(abstract);
+            this.updateAbstract(abstract.link, abstract);
+        }
+        abstracts.sort((a, b) => b.date - a.date);
+        summary.ok = true;
+        summary.catelog = abstracts.map(a => a.link);
+        this.updateSummary(url, summary);
+    }
+
+    private async requestArticle(article_id: number): Promise<string> {
+        if (this.session_id === undefined) {
+            await this.login();
+        }
+        const res = await got({
+            url: this.cfg.server,
+            method: 'POST',
+            json: {
+                op: 'getArticle',
+                sid: this.session_id,
+                article_id
+            },
+            timeout: App.cfg.timeout * 1000,
+            retry: App.cfg.retry
+        });
+        const response = JSON.parse(res.body);
+        if (response.status !== 0) {
+            if (response.content.error === 'NOT_LOGGED_IN') {
+                this.session_id = undefined;
+                return await this.requestArticle(article_id);
+            } else {
+                throw Error(`Get feeds failed: ${response.content.error}`);
+            }
+        }
+        return response.content[0].content;
+    }
+
+    async getContent(link: string) {
+        if (!await fileExists(pathJoin(this.dir, encodeURIComponent(link)))) {
+            const abstract = this.getAbstract(link)!;
+            const content = await this.requestArticle(abstract.article_id!);
+            await this.updateContent(link, content);
+            return content;
+        } else {
+            return await super.getContent(link);
+        }
+    }
+
+    private async _fetchAll(update: boolean) {
+        if (this.session_id === undefined) {
+            await this.login();
+        }
+        const res = await got({
+            url: this.cfg.server,
+            method: 'POST',
+            json: {
+                op: 'getFeeds',
+                sid: this.session_id
+            },
+            timeout: App.cfg.timeout * 1000,
+            retry: App.cfg.retry
+        });
+        const response = JSON.parse(res.body);
+        if (response.status !== 0) {
+            if (response.content.error === 'NOT_LOGGED_IN') {
+                this.session_id = undefined;
+                await this._fetchAll(update);
+                return;
+            } else {
+                throw Error(`Get feeds failed: ${response.content.error}`);
+            }
+        }
+        for (const feed of response.content) {
+            let summary = this.getSummary(feed.feed_url);
+            if (summary) {
+                summary.title = feed.title;
+                summary.ok = false;
+                summary.feed_id = feed.id;
+            } else {
+                summary = new Summary(feed.feed_url, feed.title, [], false, feed.id);
+            }
+            this.updateSummary(feed.feed_url, summary);
+        }
+        await Promise.all(this.getFeeds().map(url => this.fetch(url, update)));
+        await this.commit();
+    }
+
     async fetchOne(url: string, update: boolean) {
+        try {
+            await this.fetch(url, update);
+            await this.commit();
+        } catch (error) {
+            vscode.window.showErrorMessage(error.toString());
+        }
     }
+
     async fetchAll(update: boolean) {
+        try {
+            await this._fetchAll(update);
+        } catch (error) {
+            console.log("eeeeeeeeeeeeee", error);
+            vscode.window.showErrorMessage(error.toString());
+        }
+    }
+
+    private async syncReadStatus(read_list: number[], unread_list: number[]) {
+        if (this.session_id === undefined) {
+            await this.login();
+        }
+        const res = await got({
+            url: this.cfg.server,
+            method: 'POST',
+            json: {
+                op: 'updateArticle',
+                sid: this.session_id,
+                article_ids: read_list.join(','),
+                mode: 0,
+                field: 2,
+            },
+            timeout: App.cfg.timeout * 1000,
+            retry: App.cfg.retry
+        });
+        let response = JSON.parse(res.body);
+        if (response.status !== 0) {
+            if (response.content.error === 'NOT_LOGGED_IN') {
+                this.session_id = undefined;
+                await this.syncReadStatus(read_list, unread_list);
+                return;
+            } else {
+                throw Error(`Sync read status failed: ${response.content.error}`);
+            }
+        }
+
+        await got({
+            url: this.cfg.server,
+            method: 'POST',
+            json: {
+                op: 'updateArticle',
+                sid: this.session_id,
+                article_ids: unread_list.join(','),
+                mode: 1,
+                field: 2,
+            },
+            timeout: App.cfg.timeout * 1000,
+            retry: App.cfg.retry
+        });
+        response = JSON.parse(res.body);
+        if (response.status !== 0) {
+            throw Error(`Sync read status failed: ${response.content.error}`);
+        }
+    }
+
+    async commit() {
+        const read_list: number[] = [];
+        const unread_list: number[] = [];
+        for (const [link, op] of this.dirty_abstracts) {
+            if (op === 'up') {
+                const abstract = this.getAbstract(link)!;
+                if (abstract.read) {
+                    read_list.push(abstract.article_id!);
+                } else {
+                    unread_list.push(abstract.article_id!);
+                }
+            }
+        }
+        // try {
+        //     await this.syncReadStatus(read_list, unread_list);
+        //     console.log("sssssssssssssssss");
+        // } catch (error) {
+        //     console.log('EEEEEEEEEEEEEEEEEEEE', error);
+        //     vscode.window.showErrorMessage(error.toString());
+        // }
+
+        await super.commit();
     }
 }
