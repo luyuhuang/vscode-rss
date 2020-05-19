@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as collection from './collection';
 import { join as pathJoin } from 'path';
-import { checkDir } from './utils';
+import { checkDir, TTRSSApiURL } from './utils';
 import { AccountList, Account } from './account';
 import { FeedList, Feed } from './feeds';
 import { ArticleList, Article } from './articles';
@@ -78,11 +78,6 @@ export class App {
     }
 
     private async createTTRSSAccount(name: string, server: string, username: string, password: string) {
-        if (server.endsWith('/')) {
-            server += 'api/';
-        } else {
-            server += '/api/';
-        }
         const accounts = App.cfg.get<any>('accounts');
         accounts[uuid.v1()] = {
             name: name,
@@ -105,7 +100,7 @@ export class App {
         await collection.clean();
         delete this.collections[key];
 
-        const accounts = App.cfg.get<any>('accounts');
+        const accounts = {...App.cfg.get<any>('accounts')};
         delete accounts[key];
         await App.cfg.update('accounts', accounts, true);
     }
@@ -190,6 +185,7 @@ export class App {
             ['rss.new-account', this.rss_new_account],
             ['rss.del-account', this.rss_del_account],
             ['rss.account-rename', this.rss_account_rename],
+            ['rss.account-modify', this.rss_account_modify],
         ];
 
         for (const [cmd, handler] of commands) {
@@ -344,13 +340,13 @@ export class App {
         if (type === 'local') {
             await this.createLocalAccount(name);
         } else if (type === 'ttrss') {
-            const server = await vscode.window.showInputBox({prompt: 'Enter server URL(SELF_URL_PATH)'});
-            if (server === undefined || server.length <= 0) {return;}
+            const url = await vscode.window.showInputBox({prompt: 'Enter server URL(SELF_URL_PATH)'});
+            if (url === undefined || url.length <= 0) {return;}
             const username = await vscode.window.showInputBox({prompt: 'Enter user name'});
             if (username === undefined || username.length <= 0) {return;}
             const password = await vscode.window.showInputBox({prompt: 'Enter password', password: true});
             if (password === undefined || password.length <= 0) {return;}
-            await this.createTTRSSAccount(name, server, username, password);
+            await this.createTTRSSAccount(name, TTRSSApiURL(url), username, password);
         }
     }
 
@@ -368,6 +364,32 @@ export class App {
         const accounts = App.cfg.get<any>('accounts');
         accounts[account.key].name = name;
         await App.cfg.update('accounts', accounts, true);
+    }
+
+    async rss_account_modify(account: Account) {
+        const accounts = App.cfg.get<any>('accounts');
+        if (account.type === 'ttrss') {
+            const cfg = accounts[account.key] as TTRSSAccount;
+
+            const url = await vscode.window.showInputBox({
+                prompt: 'Enter server URL(SELF_URL_PATH)',
+                value: cfg.server.substr(0, cfg.server.length - 4)
+            });
+            if (url === undefined || url.length <= 0) {return;}
+            const username = await vscode.window.showInputBox({
+                prompt: 'Enter user name', value: cfg.username
+            });
+            if (username === undefined || username.length <= 0) {return;}
+            const password = await vscode.window.showInputBox({
+                prompt: 'Enter password', password: true, value: cfg.password
+            });
+            if (password === undefined || password.length <= 0) {return;}
+
+            cfg.server = TTRSSApiURL(url);
+            cfg.username = username;
+            cfg.password = password;
+            await App.cfg.update('accounts', accounts, true);
+        }
     }
 
     initEvents() {

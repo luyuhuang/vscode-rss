@@ -63,3 +63,7 @@ export function fileExists(path: string): Promise<boolean> {
         fs.exists(path, resolve);
     });
 }
+
+export function TTRSSApiURL(server_url: string) {
+    return server_url.endsWith('/') ? server_url + 'api/' : server_url + '/api/';
+}

@@ -13,7 +13,7 @@ export abstract class Collection {
 
     constructor(
         protected dir: string,
-        protected account: string
+        public readonly account: string
     ) {}
 
     async init() {
@@ -41,6 +41,7 @@ export abstract class Collection {
         await cfg.update('accounts', cfg.accounts, true);
     }
 
+    abstract get type(): string;
     abstract async addFeed(feed: string): Promise<void>;
     abstract async delFeed(feed: string): Promise<void>;
 
@@ -178,12 +179,16 @@ export abstract class Collection {
 }
 
 export class LocalCollection extends Collection {
+    get type() {
+        return 'local';
+    }
+
     protected get cfg(): LocalAccount {
         return super.cfg as LocalAccount;
     }
 
     getFeedList(): string[] {
-        return this.cfg.feeds;
+        return this.cfg.feeds.filter(feed => this.getSummary(feed));
     }
 
     async addFeed(feed: string) {
@@ -259,6 +264,10 @@ export class TTRSSCollection extends Collection {
     private session_id?: string;
     private dirty_abstracts = new Set<string>();
     private feed_list: string[] = [];
+
+    get type() {
+        return 'ttrss';
+    }
 
     protected get cfg(): TTRSSAccount {
         return super.cfg as TTRSSAccount;
@@ -479,11 +488,16 @@ export class TTRSSCollection extends Collection {
     }
 
     async getContent(link: string) {
-        if (!await fileExists(pathJoin(this.dir, encodeURIComponent(link)))) {
-            const abstract = this.getAbstract(link)!;
-            const content = await this.requestArticle(abstract.article_id!);
-            await this.updateContent(link, content);
-            return content;
+        if (!await fileExists(pathJoin(this.dir, 'articles', encodeURIComponent(link)))) {
+            try {
+                const abstract = this.getAbstract(link)!;
+                const content = await this.requestArticle(abstract.article_id!);
+                await this.updateContent(link, content);
+                return content;
+            } catch (error) {
+                vscode.window.showErrorMessage(error.toString());
+                throw error;
+            }
         } else {
             return await super.getContent(link);
         }
@@ -611,5 +625,11 @@ export class TTRSSCollection extends Collection {
 
         await writeFile(pathJoin(this.dir, 'feed_list'), JSON.stringify(this.feed_list));
         await super.commit();
+    }
+
+    async clean() {
+        await super.clean();
+        await removeFile(pathJoin(this.dir, 'feed_list'));
+        await removeDir(this.dir);
     }
 }

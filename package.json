@@ -74,6 +74,10 @@
                 "title": "Rename"
             },
             {
+                "command": "rss.account-modify",
+                "title": "Modify"
+            },
+            {
                 "command": "rss.articles",
                 "title": "Articles"
             },
@@ -200,12 +204,17 @@
                 {
                     "command": "rss.del-account",
                     "when": "view == rss-accounts",
-                    "group": "navigation@3"
+                    "group": "navigation@4"
                 },
                 {
                     "command": "rss.account-rename",
                     "when": "view == rss-accounts",
                     "group": "navigation@2"
+                },
+                {
+                    "command": "rss.account-modify",
+                    "when": "view == rss-accounts && viewItem != local",
+                    "group": "navigation@3"
                 },
                 {
                     "command": "rss.open-link",

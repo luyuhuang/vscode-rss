@@ -30,7 +30,7 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
             const summaries: {[url: string]: Summary} = {};
             const abstracts: {[link: string]: Abstract} = {};
 
-            for (const feed of cfg.feeds as string[]) {
+            for (const feed of cfg.get<string[]>('feeds', [])) {
                 const summary = context.globalState.get<Summary>(feed);
                 if (summary === undefined) { continue; }
                 for (const link of summary.catelog) {

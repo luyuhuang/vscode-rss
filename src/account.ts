@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { App } from './app';
+import { Collection } from './collection';
 
 export class AccountList implements vscode.TreeDataProvider<vscode.TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<Account | undefined> = new vscode.EventEmitter<Account | undefined>();
@@ -17,13 +18,18 @@ export class AccountList implements vscode.TreeDataProvider<vscode.TreeItem> {
         if (element) {
             return [];
         }
-        return Object.keys(App.instance.collections).map(key => new Account(key));
+        return Object.values(App.instance.collections).map(c => new Account(c));
     }
 }
 
 export class Account extends vscode.TreeItem {
-    constructor(public key: string) {
-        super(App.instance.collections[key].name);
-        this.command = {command: 'rss.select', title: 'select', arguments: [key]};
+    public readonly key: string;
+    public readonly type: string;
+    constructor(collection: Collection) {
+        super(collection.name);
+        this.key = collection.account;
+        this.type = collection.type;
+        this.contextValue = this.type;
+        this.command = {command: 'rss.select', title: 'select', arguments: [this.key]};
     }
 }
