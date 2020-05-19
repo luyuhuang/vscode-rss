@@ -1,10 +1,8 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { join as pathJoin } from 'path';
-import { Summary, Entry, Abstract } from './content';
+import { Summary, Entry, Abstract, Storage } from './content';
 import { writeFile, readDir, checkDir, moveFile } from './utils';
-import * as sqlite3 from 'sqlite3';
-import { open as openDB } from 'sqlite';
 import * as uuid from 'uuid';
 
 export async function migrate(context: vscode.ExtensionContext) {
@@ -55,37 +53,6 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
     '0.4.0': async (context) => {
         const root = context.globalStoragePath;
         await checkDir(root);
-        const database = await openDB({
-            filename: pathJoin(root, 'rss.db'), driver: sqlite3.Database
-        });
-
-        await database.exec(`
-        create table feeds (
-            feed text,
-            account text,
-
-            feed_id integer,
-            link text not null,
-            title text not null,
-            ok boolean not null default 0,
-
-            primary key(feed, account)
-        );
-        `);
-        await database.exec(`
-        create table articles (
-            link text,
-            feed text,
-            account text,
-
-            article_id integer,
-            title text not null,
-            date integer not null,
-            read boolean not null default 0,
-
-            primary key(link, feed, account)
-        );
-        `);
 
         const cfg = vscode.workspace.getConfiguration('rss');
         const key = uuid.v1();
@@ -103,31 +70,25 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
         const summaries = context.globalState.get<{[url: string]: Summary}>('summaries', {});
         const abstracts = context.globalState.get<{[link: string]: Abstract}>('abstracts', {});
 
+        await checkDir(pathJoin(root, key));
+        await checkDir(pathJoin(root, key, 'feeds'));
         for (const url in summaries) {
             const summary = summaries[url];
-            await database.run('insert into feeds values(?,?,?,?,?,?)',
-                             url, key, summary.feed_id, summary.link, summary.title, summary.ok);
-
-            for (const link of summary.catelog) {
+            const json = Storage.fromSummary(url, summary, link => {
                 const abstract = abstracts[link];
-                if (abstract === undefined) {
-                    continue;
-                }
-                try {
-                    await database.run('insert into articles values(?,?,?,?,?,?,?)',
-                                     link, url, key,
-                                     abstract.article_id, abstract.title, abstract.date, abstract.read);
-                } catch(e) {}
-            }
+                abstract.feed = url;
+                return abstract;
+            }).toJSON();
+            await writeFile(pathJoin(root, key, 'feeds', encodeURIComponent(url)), json);
         }
 
-        await checkDir(pathJoin(root, key));
+        await checkDir(pathJoin(root, key, 'articles'));
         const files = await readDir(root);
         for (const file of files) {
-            if (file === key || file === 'rss.db') {
+            if (file === key) {
                 continue;
             }
-            await moveFile(pathJoin(root, file), pathJoin(root, key, file));
+            await moveFile(pathJoin(root, file), pathJoin(root, key, 'articles', file));
         }
 
         await context.globalState.update('summaries', undefined);

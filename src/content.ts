@@ -21,11 +21,6 @@ export class Abstract {
     static fromEntry(entry: Entry, feed: string) {
         return new Abstract(entry.title, entry.date, entry.link, entry.read, feed);
     }
-
-    static fromArticle(article: Article) {
-        return new Abstract(article.title, article.date, article.link,
-                            article.read, article.feed, article.article_id);
-    }
 }
 
 export class Summary {
@@ -36,29 +31,46 @@ export class Summary {
         public ok: boolean = true,
         public feed_id?: number,
     ) {}
+}
 
-    static fromFeed(feed: Feed) {
-        return new Summary(feed.link, feed.title, [], feed.ok, feed.feed_id);
+export class Storage {
+    private constructor(
+        private feed: string,
+        private link: string,
+        private title: string,
+        private abstracts: Abstract[],
+        private ok: boolean = true,
+        private feed_id?: number,
+    ) {}
+
+    static fromSummary(feed: string, summary: Summary, get: (link: string) => Abstract) {
+        return new Storage(feed, summary.link, summary.title,
+                           summary.catelog.map(get),
+                           summary.ok, summary.feed_id);
     }
-}
 
-export interface Feed {
-    feed: string,
-    account: string,
+    static fromJSON(json: string) {
+        const obj = JSON.parse(json);
+        return new Storage(obj.feed, obj.link, obj.title, obj.abstracts, obj.ok, obj.feed_id);
+    }
 
-    feed_id?: number,
-    link: string,
-    title: string,
-    ok: boolean
-}
+    toSummary(set: (link: string, abstract: Abstract) => void): [string, Summary] {
+        const summary = new Summary(this.link, this.title, this.abstracts.map(abs => abs.link),
+                                    this.ok, this.feed_id);
+        for (const abstract of this.abstracts) {
+            set(abstract.link, abstract);
+        }
+        return [this.feed, summary];
+    }
 
-export interface Article {
-    link: string,
-    feed: string,
-    account: string,
-
-    article_id?: number,
-    title: string,
-    date: number,
-    read: boolean
+    toJSON() {
+        return JSON.stringify({
+            feed: this.feed,
+            link: this.link,
+            title: this.title,
+            abstracts: this.abstracts,
+            ok: this.ok,
+            feed_id: this.feed_id,
+        });
+    }
 }

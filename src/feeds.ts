@@ -20,7 +20,7 @@ export class FeedList implements vscode.TreeDataProvider<Feed> {
         }
 
         const collection = App.instance.currCollection();
-        return collection.getFeeds().map(feed => {
+        return collection.getFeedList().map(feed => {
             const summary = collection.getSummary(feed)!;
             return new Feed(feed, summary);
         });

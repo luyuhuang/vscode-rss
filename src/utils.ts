@@ -58,7 +58,7 @@ export function removeDir(path: string) {
     });
 }
 
-export function fileExists(path: string) {
+export function fileExists(path: string): Promise<boolean> {
     return new Promise(resolve => {
         fs.exists(path, resolve);
     });

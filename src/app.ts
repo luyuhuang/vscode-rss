@@ -2,15 +2,12 @@ import * as vscode from 'vscode';
 import * as collection from './collection';
 import { join as pathJoin } from 'path';
 import { checkDir } from './utils';
-import * as sqlite3 from 'sqlite3';
-import { open as openDB, Database } from 'sqlite';
 import { AccountList, Account } from './account';
 import { FeedList, Feed } from './feeds';
 import { ArticleList, Article } from './articles';
 import { FavoritesList, Item } from './favorites';
 import { Abstract } from './content';
 import * as uuid from 'uuid';
-import { stringify } from 'querystring';
 
 export class App {
     private static _instance?: App;
@@ -26,7 +23,6 @@ export class App {
 
     public collections: {[key: string]:collection.Collection} = {};
     public readonly root: string = this.context.globalStoragePath;
-    private database?: Database;
 
     private constructor(
         private context: vscode.ExtensionContext
@@ -82,6 +78,11 @@ export class App {
     }
 
     private async createTTRSSAccount(name: string, server: string, username: string, password: string) {
+        if (server.endsWith('/')) {
+            server += 'api/';
+        } else {
+            server += '/api/';
+        }
         const accounts = App.cfg.get<any>('accounts');
         accounts[uuid.v1()] = {
             name: name,
@@ -111,9 +112,6 @@ export class App {
 
     async init() {
         await checkDir(this.root);
-        this.database = await openDB({
-            filename: pathJoin(this.root, 'rss.db'), driver: sqlite3.Database
-        });
         await this.initAccounts();
     }
 
@@ -126,16 +124,28 @@ export class App {
         return App._instance!;
     }
 
-    static get db(): Database {
-        return App.instance.database!;
-    }
-
     static get cfg() {
         return vscode.workspace.getConfiguration('rss');
     }
 
-    get db(): Database {
-        return this.database!;
+    public static readonly ACCOUNT = 1;
+    public static readonly FEED = 1 << 1;
+    public static readonly ARTICLE = 1 << 2;
+    public static readonly FAVORITES = 1 << 3;
+
+    refreshLists(list: number=0b1111) {
+        if (list & App.ACCOUNT) {
+            this.account_list.refresh();
+        }
+        if (list & App.FEED) {
+            this.feed_list.refresh();
+        }
+        if (list & App.ARTICLE) {
+            this.article_list.refresh();
+        }
+        if (list & App.FAVORITES) {
+            this.favorites_list.refresh();
+        }
     }
 
     currCollection() {
@@ -192,14 +202,12 @@ export class App {
     rss_select(account: string) {
         this.current_account = account;
         this.current_feed = undefined;
-        this.feed_list.refresh();
-        this.article_list.refresh();
-        this.favorites_list.refresh();
+        this.refreshLists(App.FEED | App.ARTICLE | App.FAVORITES);
     }
 
     rss_articles(feed: string) {
         this.current_feed = feed;
-        this.article_list.refresh();
+        this.refreshLists(App.ARTICLE);
     }
 
     async rss_read(abstract: Abstract) {
@@ -209,9 +217,7 @@ export class App {
         const css = '<style type="text/css">body{font-size:1em;max-width:960px;margin:auto;}</style>';
         panel.webview.html = css + content;
         abstract.read = true;
-        this.article_list.refresh();
-        this.feed_list.refresh();
-        this.favorites_list.refresh();
+        this.refreshLists(App.FEED | App.ARTICLE | App.FAVORITES);
 
         await this.currCollection().updateAbstract(abstract.link, abstract).commit();
     }
@@ -219,9 +225,7 @@ export class App {
     async rss_set_read(article: Article) {
         const abstract = article.abstract;
         abstract.read = true;
-        this.feed_list.refresh();
-        this.article_list.refresh();
-        this.favorites_list.refresh();
+        this.refreshLists(App.FEED | App.ARTICLE | App.FAVORITES);
 
         await this.currCollection().updateAbstract(abstract.link, abstract).commit();
     }
@@ -229,9 +233,7 @@ export class App {
     async rss_set_unread(article: Article) {
         const abstract = article.abstract;
         abstract.read = false;
-        this.feed_list.refresh();
-        this.article_list.refresh();
-        this.favorites_list.refresh();
+        this.refreshLists(App.FEED | App.ARTICLE | App.FAVORITES);
 
         await this.currCollection().updateAbstract(abstract.link, abstract).commit();
     }
@@ -242,9 +244,7 @@ export class App {
             abs.read = true;
             this.currCollection().updateAbstract(link, abs);
         }
-        this.feed_list.refresh();
-        this.article_list.refresh();
-        this.favorites_list.refresh();
+        this.refreshLists(App.FEED | App.ARTICLE | App.FAVORITES);
 
         await this.currCollection().commit();
     }
@@ -260,8 +260,7 @@ export class App {
             cancellable: false
         }, async () => {
             await Promise.all(Object.values(this.collections).map(c => c.fetchAll(true)));
-            this.feed_list.refresh();
-            this.article_list.refresh();
+            this.refreshLists(App.FEED | App.ARTICLE);
             this.updating = false;
         });
     }
@@ -279,8 +278,7 @@ export class App {
             const collection = account ?
                 this.collections[account.key] : this.currCollection();
             await collection.fetchAll(true);
-            this.feed_list.refresh();
-            this.article_list.refresh();
+            this.refreshLists(App.FEED | App.ARTICLE);
             this.updating = false;
         });
     }
@@ -300,8 +298,7 @@ export class App {
             cancellable: false
         }, async () => {
             await this.currCollection().fetchOne(url, true);
-            this.feed_list.refresh();
-            this.article_list.refresh();
+            this.refreshLists(App.FEED | App.ARTICLE);
             this.updating = false;
         });
     }
@@ -342,12 +339,12 @@ export class App {
     async rss_new_account() {
         const type = await vscode.window.showQuickPick(['local', 'ttrss'], {placeHolder: "Select account type"});
         if (type === undefined) {return;}
-        const name = await vscode.window.showInputBox({prompt: 'Enter the name'});
+        const name = await vscode.window.showInputBox({prompt: 'Enter account name'});
         if (name === undefined || name.length <= 0) {return;}
         if (type === 'local') {
             await this.createLocalAccount(name);
         } else if (type === 'ttrss') {
-            const server = await vscode.window.showInputBox({prompt: 'Enter server URL'});
+            const server = await vscode.window.showInputBox({prompt: 'Enter server URL(SELF_URL_PATH)'});
             if (server === undefined || server.length <= 0) {return;}
             const username = await vscode.window.showInputBox({prompt: 'Enter user name'});
             if (username === undefined || username.length <= 0) {return;}
@@ -391,9 +388,7 @@ export class App {
             }, async () => {
                 await this.initAccounts();
                 await Promise.all(Object.values(this.collections).map(c => c.fetchAll(false)));
-                this.account_list.refresh();
-                this.feed_list.refresh();
-                this.favorites_list.refresh();
+                this.refreshLists();
                 this.updating = false;
             });
         });

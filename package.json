@@ -67,7 +67,7 @@
             },
             {
                 "command": "rss.del-account",
-                "title": "Delete account"
+                "title": "Delete"
             },
             {
                 "command": "rss.account-rename",
@@ -194,15 +194,18 @@
             "view/item/context": [
                 {
                     "command": "rss.refresh-account",
-                    "when": "view == rss-accounts"
+                    "when": "view == rss-accounts",
+                    "group": "navigation@1"
                 },
                 {
                     "command": "rss.del-account",
-                    "when": "view == rss-accounts"
+                    "when": "view == rss-accounts",
+                    "group": "navigation@3"
                 },
                 {
                     "command": "rss.account-rename",
-                    "when": "view == rss-accounts"
+                    "when": "view == rss-accounts",
+                    "group": "navigation@2"
                 },
                 {
                     "command": "rss.open-link",
@@ -257,7 +260,6 @@
         "@types/he": "^1.1.0",
         "@types/mocha": "^7.0.2",
         "@types/node": "^13.11.0",
-        "@types/sqlite3": "^3.1.6",
         "@types/uuid": "^7.0.3",
         "@types/vscode": "^1.40.0",
         "@typescript-eslint/eslint-plugin": "^2.26.0",
@@ -274,8 +276,6 @@
         "got": "10.6.0",
         "he": "^1.2.0",
         "iconv-lite": "^0.5.1",
-        "sqlite": "^4.0.7",
-        "sqlite3": "^4.2.0",
         "uuid": "^8.0.0"
     }
 }
