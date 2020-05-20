@@ -493,15 +493,21 @@ export class TTRSSCollection extends Collection {
 
     async getContent(link: string) {
         if (!await fileExists(pathJoin(this.dir, 'articles', encodeURIComponent(link)))) {
-            try {
-                const abstract = this.getAbstract(link)!;
-                const content = await this.requestArticle(abstract.custom_data);
-                await this.updateContent(link, content);
-                return content;
-            } catch (error) {
-                vscode.window.showErrorMessage(error.toString());
-                throw error;
-            }
+            return await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: "Fetching content...",
+                cancellable: false
+            }, async () => {
+                try {
+                    const abstract = this.getAbstract(link)!;
+                    const content = await this.requestArticle(abstract.custom_data);
+                    await this.updateContent(link, content);
+                    return content;
+                } catch (error) {
+                    vscode.window.showErrorMessage(error.toString());
+                    throw error;
+                }
+            });
         } else {
             return await super.getContent(link);
         }
