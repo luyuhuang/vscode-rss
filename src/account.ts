@@ -31,5 +31,15 @@ export class Account extends vscode.TreeItem {
         this.type = collection.type;
         this.contextValue = this.type;
         this.command = {command: 'rss.select', title: 'select', arguments: [this.key]};
+
+        const links = collection.getArticleList();
+        const unread_num = links.length === 0 ? 0
+            : links.map(link => Number(!collection.getAbstract(link)?.read))
+            .reduce((a, b) => a + b);
+
+        if (unread_num > 0) {
+            this.label += ` (${unread_num})`;
+            this.iconPath = new vscode.ThemeIcon('rss');
+        }
     }
 }

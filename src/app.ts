@@ -213,7 +213,7 @@ export class App {
         const css = '<style type="text/css">body{font-size:1em;max-width:960px;margin:auto;}</style>';
         panel.webview.html = css + content;
         abstract.read = true;
-        this.refreshLists(App.FEED | App.ARTICLE | App.FAVORITES);
+        this.refreshLists();
 
         await this.currCollection().updateAbstract(abstract.link, abstract).commit();
     }
@@ -221,7 +221,7 @@ export class App {
     async rss_set_read(article: Article) {
         const abstract = article.abstract;
         abstract.read = true;
-        this.refreshLists(App.FEED | App.ARTICLE | App.FAVORITES);
+        this.refreshLists();
 
         await this.currCollection().updateAbstract(abstract.link, abstract).commit();
     }
@@ -229,7 +229,7 @@ export class App {
     async rss_set_unread(article: Article) {
         const abstract = article.abstract;
         abstract.read = false;
-        this.refreshLists(App.FEED | App.ARTICLE | App.FAVORITES);
+        this.refreshLists();
 
         await this.currCollection().updateAbstract(abstract.link, abstract).commit();
     }
@@ -240,7 +240,7 @@ export class App {
             abs.read = true;
             this.currCollection().updateAbstract(link, abs);
         }
-        this.refreshLists(App.FEED | App.ARTICLE | App.FAVORITES);
+        this.refreshLists();
 
         await this.currCollection().commit();
     }
@@ -256,7 +256,7 @@ export class App {
             cancellable: false
         }, async () => {
             await Promise.all(Object.values(this.collections).map(c => c.fetchAll(true)));
-            this.refreshLists(App.FEED | App.ARTICLE);
+            this.refreshLists(App.ACCOUNT | App.FEED | App.ARTICLE);
             this.updating = false;
         });
     }
@@ -274,7 +274,7 @@ export class App {
             const collection = account ?
                 this.collections[account.key] : this.currCollection();
             await collection.fetchAll(true);
-            this.refreshLists(App.FEED | App.ARTICLE);
+            this.refreshLists(App.ACCOUNT | App.FEED | App.ARTICLE);
             this.updating = false;
         });
     }
@@ -294,7 +294,7 @@ export class App {
             cancellable: false
         }, async () => {
             await this.currCollection().fetchOne(url, true);
-            this.refreshLists(App.FEED | App.ARTICLE);
+            this.refreshLists(App.ACCOUNT | App.FEED | App.ARTICLE);
             this.updating = false;
         });
     }

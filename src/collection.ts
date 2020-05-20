@@ -71,6 +71,10 @@ export abstract class Collection {
         return Object.keys(this.summaries);
     }
 
+    getArticleList(): string[] {
+        return Object.keys(this.abstracts);
+    }
+
     protected getFeeds() {
         return Object.keys(this.summaries);
     }
