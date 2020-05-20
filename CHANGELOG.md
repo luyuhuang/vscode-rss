@@ -1,5 +1,13 @@
 # Change Log
 
+## v0.4.0 (2020-05-20)
+
+Major update:
+
+- Support multiple accounts
+- **Support Tiny Tiny RSS**
+- Configurations `rss.account` and `rss.favorites` are now obsolete, you can remove them after updating
+
 ## v0.3.1 (2020-05-12)
 
 - Modify the way articles are stored
