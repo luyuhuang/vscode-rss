@@ -385,7 +385,7 @@ export class TTRSSCollection extends Collection {
             json: {
                 op: 'unsubscribeFeed',
                 sid: this.session_id,
-                feed_id: summary.feed_id,
+                feed_id: summary.custom_data,
             },
             timeout: App.cfg.timeout * 1000,
             retry: App.cfg.retry
@@ -420,7 +420,7 @@ export class TTRSSCollection extends Collection {
 
     private async fetch(url: string, update: boolean) {
         const summary = this.getSummary(url);
-        if (summary === undefined || summary.feed_id === undefined) {
+        if (summary === undefined || summary.custom_data === undefined) {
             throw Error('Feed dose not exist');
         }
         if (!update && summary.ok) {
@@ -436,7 +436,7 @@ export class TTRSSCollection extends Collection {
             json: {
                 op: 'getHeadlines',
                 sid: this.session_id,
-                feed_id: summary.feed_id,
+                feed_id: summary.custom_data,
             },
             timeout: App.cfg.timeout * 1000,
             retry: App.cfg.retry
@@ -495,7 +495,7 @@ export class TTRSSCollection extends Collection {
         if (!await fileExists(pathJoin(this.dir, 'articles', encodeURIComponent(link)))) {
             try {
                 const abstract = this.getAbstract(link)!;
-                const content = await this.requestArticle(abstract.article_id!);
+                const content = await this.requestArticle(abstract.custom_data);
                 await this.updateContent(link, content);
                 return content;
             } catch (error) {
@@ -516,7 +516,8 @@ export class TTRSSCollection extends Collection {
             method: 'POST',
             json: {
                 op: 'getFeeds',
-                sid: this.session_id
+                sid: this.session_id,
+                cat_id: -3
             },
             timeout: App.cfg.timeout * 1000,
             retry: App.cfg.retry
@@ -542,7 +543,7 @@ export class TTRSSCollection extends Collection {
             let summary = this.getSummary(feed.feed_url);
             if (summary) {
                 summary.title = feed.title;
-                summary.feed_id = feed.id;
+                summary.custom_data = feed.id;
             } else {
                 summary = new Summary(feed.feed_url, feed.title, [], false, feed.id);
             }
@@ -613,9 +614,9 @@ export class TTRSSCollection extends Collection {
             const abstract = this.getAbstract(link);
             if (abstract) {
                 if (abstract.read) {
-                    read_list.push(abstract.article_id!);
+                    read_list.push(abstract.custom_data);
                 } else {
-                    unread_list.push(abstract.article_id!);
+                    unread_list.push(abstract.custom_data);
                 }
             }
         }

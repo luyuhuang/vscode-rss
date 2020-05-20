@@ -15,7 +15,7 @@ export class Abstract {
         public readonly link: string,
         public read: boolean,
         public feed: string,
-        public article_id?: number,
+        public custom_data?: any,
     ) {}
 
     static fromEntry(entry: Entry, feed: string) {
@@ -29,7 +29,7 @@ export class Summary {
         public title: string,
         public catelog: string[] = [],
         public ok: boolean = true,
-        public feed_id?: number,
+        public custom_data?: any,
     ) {}
 }
 
@@ -40,23 +40,23 @@ export class Storage {
         private title: string,
         private abstracts: Abstract[],
         private ok: boolean = true,
-        private feed_id?: number,
+        private custom_data?: any,
     ) {}
 
     static fromSummary(feed: string, summary: Summary, get: (link: string) => Abstract) {
         return new Storage(feed, summary.link, summary.title,
                            summary.catelog.map(get),
-                           summary.ok, summary.feed_id);
+                           summary.ok, summary.custom_data);
     }
 
     static fromJSON(json: string) {
         const obj = JSON.parse(json);
-        return new Storage(obj.feed, obj.link, obj.title, obj.abstracts, obj.ok, obj.feed_id);
+        return new Storage(obj.feed, obj.link, obj.title, obj.abstracts, obj.ok, obj.custom_data);
     }
 
     toSummary(set: (link: string, abstract: Abstract) => void): [string, Summary] {
         const summary = new Summary(this.link, this.title, this.abstracts.map(abs => abs.link),
-                                    this.ok, this.feed_id);
+                                    this.ok, this.custom_data);
         for (const abstract of this.abstracts) {
             set(abstract.link, abstract);
         }
@@ -70,7 +70,7 @@ export class Storage {
             title: this.title,
             abstracts: this.abstracts,
             ok: this.ok,
-            feed_id: this.feed_id,
+            custom_data: this.custom_data,
         });
     }
 }
