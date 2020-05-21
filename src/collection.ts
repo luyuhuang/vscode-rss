@@ -313,11 +313,7 @@ export class TTRSSCollection extends Collection {
         this.session_id = response.content.session_id;
     }
 
-    private async _addFeed(feed: string) {
-        if (this.getSummary(feed) !== undefined) {
-            vscode.window.showInformationMessage('Feed already exists');
-            return;
-        }
+    private async request(req: {[key: string]: any}): Promise<any> {
         if (this.session_id === undefined) {
             await this.login();
         }
@@ -325,9 +321,8 @@ export class TTRSSCollection extends Collection {
             url: this.cfg.server,
             method: 'POST',
             json: {
-                op: 'subscribeToFeed',
                 sid: this.session_id,
-                feed_url: feed,
+                ...req
             },
             timeout: App.cfg.timeout * 1000,
             retry: App.cfg.retry
@@ -336,23 +331,21 @@ export class TTRSSCollection extends Collection {
         if (response.status !== 0) {
             if (response.content.error === 'NOT_LOGGED_IN') {
                 this.session_id = undefined;
-                await this._addFeed(feed);
-                return;
+                return this.request(req);
             } else {
-                throw Error(`Add feed failed: ${response.content.error}`);
+                throw Error(response.content.error);
             }
         }
-        await got({
-            url: this.cfg.server,
-            method: 'POST',
-            json: {
-                op: 'updateFeed',
-                sid: this.session_id,
-                feed_id: response.content.status.feed_id,
-            },
-            timeout: App.cfg.timeout * 1000,
-            retry: App.cfg.retry
-        });
+        return response;
+    }
+
+    private async _addFeed(feed: string) {
+        if (this.getSummary(feed) !== undefined) {
+            vscode.window.showInformationMessage('Feed already exists');
+            return;
+        }
+        const response = await this.request({op: 'subscribeToFeed', feed_url: feed});
+        await this.request({op: 'updateFeed', feed_id: response.content.status.feed_id});
         await this._fetchAll(false);
         App.instance.refreshLists();
     }
@@ -366,7 +359,7 @@ export class TTRSSCollection extends Collection {
             try {
                 await this._addFeed(feed);
             } catch (error) {
-                vscode.window.showErrorMessage(error.toString());
+                vscode.window.showErrorMessage('Add feed failed: ' + error.toString());
             }
         });
     }
@@ -376,30 +369,7 @@ export class TTRSSCollection extends Collection {
         if (summary === undefined) {
             return;
         }
-        if (this.session_id === undefined) {
-            await this.login();
-        }
-        const res = await got({
-            url: this.cfg.server,
-            method: 'POST',
-            json: {
-                op: 'unsubscribeFeed',
-                sid: this.session_id,
-                feed_id: summary.custom_data,
-            },
-            timeout: App.cfg.timeout * 1000,
-            retry: App.cfg.retry
-        });
-        const response = JSON.parse(res.body);
-        if (response.status !== 0) {
-            if (response.content.error === 'NOT_LOGGED_IN') {
-                this.session_id = undefined;
-                await this._delFeed(feed);
-                return;
-            } else {
-                throw Error(`Delete feed failed: ${response.content.error}`);
-            }
-        }
+        await this.request({op: 'unsubscribeFeed', feed_id: summary.custom_data});
         await this._fetchAll(false);
         App.instance.refreshLists();
     }
@@ -413,7 +383,7 @@ export class TTRSSCollection extends Collection {
             try {
                 await this._delFeed(feed);
             } catch (error) {
-                vscode.window.showErrorMessage(error.toString());
+                vscode.window.showErrorMessage('Remove feed failed: ' + error.toString());
             }
         });
     }
@@ -427,30 +397,7 @@ export class TTRSSCollection extends Collection {
             return;
         }
 
-        if (this.session_id === undefined) {
-            await this.login();
-        }
-        const res = await got({
-            url: this.cfg.server,
-            method: 'POST',
-            json: {
-                op: 'getHeadlines',
-                sid: this.session_id,
-                feed_id: summary.custom_data,
-            },
-            timeout: App.cfg.timeout * 1000,
-            retry: App.cfg.retry
-        });
-        const response = JSON.parse(res.body);
-        if (response.status !== 0) {
-            if (response.content.error === 'NOT_LOGGED_IN') {
-                this.session_id = undefined;
-                await this.fetch(url, update);
-                return;
-            } else {
-                throw Error(`Get feeds failed: ${response.content.error}`);
-            }
-        }
+        const response = await this.request({op: 'getHeadlines', feed_id: summary.custom_data});
         const headlines = response.content as any[];
         const abstracts = [];
         for (const h of headlines) {
@@ -458,37 +405,11 @@ export class TTRSSCollection extends Collection {
             abstracts.push(abstract);
             this.updateAbstract(abstract.link, abstract);
         }
+
         abstracts.sort((a, b) => b.date - a.date);
         summary.ok = true;
         summary.catelog = abstracts.map(a => a.link);
         this.updateSummary(url, summary);
-    }
-
-    private async requestArticle(article_id: number): Promise<string> {
-        if (this.session_id === undefined) {
-            await this.login();
-        }
-        const res = await got({
-            url: this.cfg.server,
-            method: 'POST',
-            json: {
-                op: 'getArticle',
-                sid: this.session_id,
-                article_id
-            },
-            timeout: App.cfg.timeout * 1000,
-            retry: App.cfg.retry
-        });
-        const response = JSON.parse(res.body);
-        if (response.status !== 0) {
-            if (response.content.error === 'NOT_LOGGED_IN') {
-                this.session_id = undefined;
-                return await this.requestArticle(article_id);
-            } else {
-                throw Error(`Get feeds failed: ${response.content.error}`);
-            }
-        }
-        return response.content[0].content;
     }
 
     async getContent(link: string) {
@@ -500,11 +421,14 @@ export class TTRSSCollection extends Collection {
             }, async () => {
                 try {
                     const abstract = this.getAbstract(link)!;
-                    const content = await this.requestArticle(abstract.custom_data);
+                    const response = await this.request({
+                        op: 'getArticle', article_id: abstract.custom_data
+                    });
+                    const content = response.content[0].content;
                     await this.updateContent(link, content);
                     return content;
                 } catch (error) {
-                    vscode.window.showErrorMessage(error.toString());
+                    vscode.window.showErrorMessage('Fetch content failed: ' + error.toString());
                     throw error;
                 }
             });
@@ -514,30 +438,7 @@ export class TTRSSCollection extends Collection {
     }
 
     private async _fetchAll(update: boolean) {
-        if (this.session_id === undefined) {
-            await this.login();
-        }
-        const res = await got({
-            url: this.cfg.server,
-            method: 'POST',
-            json: {
-                op: 'getFeeds',
-                sid: this.session_id,
-                cat_id: -3
-            },
-            timeout: App.cfg.timeout * 1000,
-            retry: App.cfg.retry
-        });
-        const response = JSON.parse(res.body);
-        if (response.status !== 0) {
-            if (response.content.error === 'NOT_LOGGED_IN') {
-                this.session_id = undefined;
-                await this._fetchAll(update);
-                return;
-            } else {
-                throw Error(`Get feeds failed: ${response.content.error}`);
-            }
-        }
+        const response = await this.request({op: 'getFeeds', cat_id: -3});
         this.feed_list = response.content.map((feed: any) => feed.feed_url);
         const feeds = new Set<string>(this.feed_list);
         for (const feed of this.getFeeds()) {
@@ -561,10 +462,17 @@ export class TTRSSCollection extends Collection {
 
     async fetchOne(url: string, update: boolean) {
         try {
+            if (update) {
+                const summary = this.getSummary(url);
+                if (summary === undefined || summary.custom_data === undefined) {
+                    throw Error('Feed dose not exist');
+                }
+                await this.request({op: 'updateFeed', feed_id: summary.custom_data});
+            }
             await this.fetch(url, update);
             await this.commit();
         } catch (error) {
-            vscode.window.showErrorMessage(error.toString());
+            vscode.window.showErrorMessage('Update feed failed: ' + error.toString());
         }
     }
 
@@ -572,7 +480,7 @@ export class TTRSSCollection extends Collection {
         try {
             await this._fetchAll(update);
         } catch (error) {
-            vscode.window.showErrorMessage(error.toString());
+            vscode.window.showErrorMessage('Update feeds failed: ' + error.toString());
         }
     }
 
@@ -585,32 +493,12 @@ export class TTRSSCollection extends Collection {
         if (list.length <= 0) {
             return;
         }
-        if (this.session_id === undefined) {
-            await this.login();
-        }
-        const res = await got({
-            url: this.cfg.server,
-            method: 'POST',
-            json: {
-                op: 'updateArticle',
-                sid: this.session_id,
-                article_ids: list.join(','),
-                mode: Number(!read),
-                field: 2,
-            },
-            timeout: App.cfg.timeout * 1000,
-            retry: App.cfg.retry
+        await this.request({
+            op: 'updateArticle',
+            article_ids: list.join(','),
+            mode: Number(!read),
+            field: 2,
         });
-        let response = JSON.parse(res.body);
-        if (response.status !== 0) {
-            if (response.content.error === 'NOT_LOGGED_IN') {
-                this.session_id = undefined;
-                await this.syncReadStatus(list, read);
-                return;
-            } else {
-                throw Error(`Sync read status failed: ${response.content.error}`);
-            }
-        }
     }
 
     async commit() {
@@ -631,7 +519,7 @@ export class TTRSSCollection extends Collection {
             await this.syncReadStatus(read_list, true);
             await this.syncReadStatus(unread_list, false);
         } catch (error) {
-            vscode.window.showErrorMessage(error.toString());
+            vscode.window.showErrorMessage('Sync read status failed: ' + error.toString());
         }
 
         await writeFile(pathJoin(this.dir, 'feed_list'), JSON.stringify(this.feed_list));
