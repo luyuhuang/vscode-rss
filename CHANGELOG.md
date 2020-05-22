@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.4.1 (2020-05-22)
+
+- Show progress when fetching content from server
+- Optimize updating single feed
+
 ## v0.4.0 (2020-05-20)
 
 Major update:
