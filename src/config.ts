@@ -9,8 +9,15 @@ interface Favorites {
     list: string[];
 }
 
+type FeedTree = (string | Category)[];
+
+interface Category {
+    name: string;
+    list: FeedTree;
+}
+
 interface LocalAccount extends Account {
-    feeds: string[];
+    feeds: FeedTree;
 }
 
 interface TTRSSAccount extends Account {

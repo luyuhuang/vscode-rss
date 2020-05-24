@@ -238,19 +238,19 @@
                 },
                 {
                     "command": "rss.set-all-read",
-                    "when": "view == rss-feeds"
+                    "when": "viewItem == feed"
                 },
                 {
                     "command": "rss.refresh-one",
-                    "when": "view == rss-feeds"
+                    "when": "viewItem == feed"
                 },
                 {
                     "command": "rss.open-website",
-                    "when": "view == rss-feeds"
+                    "when": "viewItem == feed"
                 },
                 {
                     "command": "rss.remove-feed",
-                    "when": "view == rss-feeds"
+                    "when": "viewItem == feed"
                 }
             ]
         }

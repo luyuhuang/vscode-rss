@@ -67,7 +67,7 @@ export abstract class Collection {
         return this.abstracts[link];
     }
 
-    getFeedList(): string[] {
+    getFeedList(): FeedTree {
         return Object.keys(this.summaries);
     }
 
@@ -79,18 +79,24 @@ export abstract class Collection {
         return Object.keys(this.summaries);
     }
 
-    getArticles(feed: string) {
-        const summary = this.getSummary(feed);
-        const list: Abstract[] = [];
-        if (summary !== undefined) {
-            for (const link of summary.catelog) {
-                const abstract = this.getAbstract(link);
-                if (abstract) {
-                    list.push(abstract);
+    getArticles(feed: string): Abstract[] {
+        if (feed === '<unread>') {
+            const list = Object.values(this.abstracts).filter(a => !a.read);
+            list.sort((a, b) => b.date - a.date);
+            return list;
+        } else {
+            const summary = this.getSummary(feed);
+            const list: Abstract[] = [];
+            if (summary !== undefined) {
+                for (const link of summary.catelog) {
+                    const abstract = this.getAbstract(link);
+                    if (abstract) {
+                        list.push(abstract);
+                    }
                 }
             }
+            return list;
         }
-        return list;
     }
 
     getFavorites(): Favorites[] {
@@ -191,8 +197,8 @@ export class LocalCollection extends Collection {
         return super.cfg as LocalAccount;
     }
 
-    getFeedList(): string[] {
-        return this.cfg.feeds.filter(feed => this.getSummary(feed));
+    getFeedList(): FeedTree {
+        return this.cfg.feeds;
     }
 
     async addFeed(feed: string) {
@@ -200,8 +206,21 @@ export class LocalCollection extends Collection {
         await this.updateCfg();
     }
 
+    private deleteFromTree(tree: FeedTree, feed: string) {
+        for (const [i, item] of tree.entries()) {
+            if (typeof(item) === 'string') {
+                if (item === feed) {
+                    tree.splice(i, 1);
+                    break;
+                }
+            } else {
+                this.deleteFromTree(item.list, feed);
+            }
+        }
+    }
+
     async delFeed(feed: string) {
-        this.cfg.feeds.splice(this.cfg.feeds.indexOf(feed), 1);
+        this.deleteFromTree(this.cfg.feeds, feed);
         await this.updateCfg();
     }
 
@@ -251,8 +270,20 @@ export class LocalCollection extends Collection {
         await this.commit();
     }
 
+    private *walkFeedTree(tree: FeedTree): Generator<string> {
+        for (const item of tree) {
+            if (typeof(item) === 'string') {
+                yield item;
+            } else {
+                for (const feed of this.walkFeedTree(item.list)) {
+                    yield feed;
+                }
+            }
+        }
+    }
+
     async fetchAll(update: boolean) {
-        const feeds = this.cfg.feeds as string[];
+        const feeds = [...this.walkFeedTree(this.cfg.feeds)];
         await Promise.all(feeds.map(feed => this.fetch(feed, update)));
         const feed_set = new Set(feeds);
         for (const feed of this.getFeeds()) {
@@ -285,7 +316,7 @@ export class TTRSSCollection extends Collection {
         await super.init();
     }
 
-    getFeedList(): string[] {
+    getFeedList(): FeedTree {
         if (this.feed_list.length > 0) {
             return this.feed_list;
         } else {
