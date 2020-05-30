@@ -1,12 +1,6 @@
 interface Account {
     name: string;
     type: 'local' | 'ttrss';
-    favorites: Favorites[];
-}
-
-interface Favorites {
-    name: string;
-    list: string[];
 }
 
 type FeedTree = (string | Category)[];
@@ -14,6 +8,7 @@ type FeedTree = (string | Category)[];
 interface Category {
     name: string;
     list: FeedTree;
+    custom_data?: any;
 }
 
 interface LocalAccount extends Account {

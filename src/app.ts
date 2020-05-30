@@ -70,9 +70,6 @@ export class App {
             name: name,
             type: 'local',
             feeds: [],
-            favorites: [
-                {"name": "Default", "list": []}
-            ]
         };
         await App.cfg.update('accounts', accounts, true);
     }
@@ -85,9 +82,6 @@ export class App {
             server,
             username,
             password,
-            favorites: [
-                {"name": "Default", "list": []}
-            ]
         };
         await App.cfg.update('accounts', accounts, true);
     }
@@ -256,7 +250,7 @@ export class App {
             cancellable: false
         }, async () => {
             await Promise.all(Object.values(this.collections).map(c => c.fetchAll(true)));
-            this.refreshLists(App.ACCOUNT | App.FEED | App.ARTICLE);
+            this.refreshLists();
             this.updating = false;
         });
     }
@@ -274,7 +268,7 @@ export class App {
             const collection = account ?
                 this.collections[account.key] : this.currCollection();
             await collection.fetchAll(true);
-            this.refreshLists(App.ACCOUNT | App.FEED | App.ARTICLE);
+            this.refreshLists();
             this.updating = false;
         });
     }
@@ -294,7 +288,7 @@ export class App {
             cancellable: false
         }, async () => {
             await this.currCollection().fetchOne(url, true);
-            this.refreshLists(App.ACCOUNT | App.FEED | App.ARTICLE);
+            this.refreshLists();
             this.updating = false;
         });
     }
@@ -318,18 +312,13 @@ export class App {
     }
 
     async rss_add_to_favorites(article: Article) {
-        const favorites: any[] = this.currCollection().getFavorites();
-        const name = await vscode.window.showQuickPick(favorites.map((e: any) => e.name));
-        if (name === undefined) {
-            return;
-        }
-        await this.currCollection().addToFavorites(
-            article.abstract.link, favorites.findIndex(e => e.name === name)
-        );
+        await this.currCollection().addToFavorites(article.abstract.link);
+        this.refreshLists(App.FAVORITES);
     }
 
     async rss_remove_from_favorites(item: Item) {
-        await this.currCollection().removeFromFavorites(item.abstract.link, item.index);
+        await this.currCollection().removeFromFavorites(item.abstract.link);
+        this.refreshLists(App.FAVORITES);
     }
 
     async rss_new_account() {

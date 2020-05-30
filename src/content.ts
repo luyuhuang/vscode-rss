@@ -15,6 +15,7 @@ export class Abstract {
         public readonly link: string,
         public read: boolean,
         public feed: string,
+        public starred: boolean = false,
         public custom_data?: any,
     ) {}
 

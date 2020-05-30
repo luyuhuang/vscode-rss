@@ -61,9 +61,6 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
                 name: 'Default',
                 type: 'local',
                 feeds: cfg.get('feeds', []),
-                favorites: cfg.get('favorites', [
-                    {"name": "Default", "list": []}
-                ])
             }
         }, true);
 

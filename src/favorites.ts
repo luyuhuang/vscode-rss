@@ -16,21 +16,10 @@ export class FavoritesList implements vscode.TreeDataProvider<vscode.TreeItem> {
     }
 
     getChildren(element?: vscode.TreeItem): vscode.TreeItem[] {
-        const cfg_favorites = App.instance.currFavorites();
         if (element) {
-            const favorites = element as Favorites;
-            const list: string[] = cfg_favorites[favorites.index].list;
-            const items: Item[] = [];
-            for (const link of list) {
-                const abstract = App.instance.currCollection().getAbstract(link);
-                if (abstract) {
-                    items.push(new Item(abstract, favorites.index));
-                }
-            }
-            return items;
-        } else {
-            return cfg_favorites.map((e: any, i: number) => new Favorites(e.name, i));
+            return [];
         }
+        return App.instance.currFavorites().map((a, i) => new Item(a, i));
     }
 }
 

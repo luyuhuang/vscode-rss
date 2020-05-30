@@ -44,20 +44,8 @@ export abstract class Collection {
     abstract get type(): string;
     abstract async addFeed(feed: string): Promise<void>;
     abstract async delFeed(feed: string): Promise<void>;
-
-    async addToFavorites(link: string, index: number) {
-        const list = this.cfg.favorites[index].list;
-        if (list.indexOf(link) < 0) {
-            list.push(link);
-            await this.updateCfg();
-        }
-    }
-
-    async removeFromFavorites(link: string, index: number) {
-        const list = this.cfg.favorites[index].list;
-        list.splice(list.indexOf(link), 1);
-        await this.updateCfg();
-    }
+    abstract async addToFavorites(link: string): Promise<void>;
+    abstract async removeFromFavorites(link: string): Promise<void>;
 
     getSummary(url: string): Summary | undefined {
         return this.summaries[url];
@@ -99,8 +87,14 @@ export abstract class Collection {
         }
     }
 
-    getFavorites(): Favorites[] {
-        return this.cfg.favorites;
+    getFavorites() {
+        const list: Abstract[] = [];
+        for (const abstract of Object.values(this.abstracts)) {
+            if (abstract.starred) {
+                list.push(abstract);
+            }
+        }
+        return list;
     }
 
     async getContent(link: string) {
@@ -201,8 +195,32 @@ export class LocalCollection extends Collection {
         return this.cfg.feeds;
     }
 
+    private async addToTree(tree: FeedTree, feed: string) {
+        const categories: Category[] = [];
+        for (const item of tree) {
+            if (typeof(item) !== 'string') {
+                categories.push(item);
+            }
+        }
+        if (categories.length > 0) {
+            const choice = await vscode.window.showQuickPick([
+                '.', ...categories.map(c => c.name)
+            ], {placeHolder: 'Select a category'});
+            if (choice === undefined) {
+                return;
+            } else if (choice === '.') {
+                tree.push(feed);
+            } else {
+                const caty = categories.find(c => c.name === choice)!;
+                await this.addToTree(caty.list, feed);
+            }
+        } else {
+            tree.push(feed);
+        }
+    }
+
     async addFeed(feed: string) {
-        this.cfg.feeds.push(feed);
+        await this.addToTree(this.cfg.feeds, feed);
         await this.updateCfg();
     }
 
@@ -222,6 +240,24 @@ export class LocalCollection extends Collection {
     async delFeed(feed: string) {
         this.deleteFromTree(this.cfg.feeds, feed);
         await this.updateCfg();
+    }
+
+    async addToFavorites(link: string) {
+        const abstract = this.getAbstract(link);
+        if (abstract) {
+            abstract.starred = true;
+            this.updateAbstract(link, abstract);
+            await this.commit();
+        }
+    }
+
+    async removeFromFavorites(link: string) {
+        const abstract = this.getAbstract(link);
+        if (abstract) {
+            abstract.starred = false;
+            this.updateAbstract(link, abstract);
+            await this.commit();
+        }
     }
 
     private async fetch(url: string, update: boolean) {
@@ -298,7 +334,7 @@ export class LocalCollection extends Collection {
 export class TTRSSCollection extends Collection {
     private session_id?: string;
     private dirty_abstracts = new Set<string>();
-    private feed_list: string[] = [];
+    private feed_tree: FeedTree = [];
 
     get type() {
         return 'ttrss';
@@ -311,14 +347,14 @@ export class TTRSSCollection extends Collection {
     async init() {
         const path = pathJoin(this.dir, 'feed_list');
         if (await fileExists(path)) {
-            this.feed_list = JSON.parse(await readFile(path));
+            this.feed_tree = JSON.parse(await readFile(path));
         }
         await super.init();
     }
 
     getFeedList(): FeedTree {
-        if (this.feed_list.length > 0) {
-            return this.feed_list;
+        if (this.feed_tree.length > 0) {
+            return this.feed_tree;
         } else {
             return super.getFeedList();
         }
@@ -370,25 +406,55 @@ export class TTRSSCollection extends Collection {
         return response;
     }
 
-    private async _addFeed(feed: string) {
+    private async _addFeed(feed: string, category_id: number) {
         if (this.getSummary(feed) !== undefined) {
             vscode.window.showInformationMessage('Feed already exists');
             return;
         }
-        const response = await this.request({op: 'subscribeToFeed', feed_url: feed});
+        const response = await this.request({
+            op: 'subscribeToFeed', feed_url: feed, category_id
+        });
         await this.request({op: 'updateFeed', feed_id: response.content.status.feed_id});
         await this._fetchAll(false);
         App.instance.refreshLists();
     }
 
+    private async selectCategory(id: number, tree: FeedTree): Promise<number | undefined> {
+        const categories: Category[] = [];
+        for (const item of tree) {
+            if (typeof(item) !== 'string') {
+                categories.push(item);
+            }
+        }
+        if (categories.length > 0) {
+            const choice = await vscode.window.showQuickPick([
+                '.', ...categories.map(c => c.name)
+            ], {placeHolder: 'Select a category'});
+            if (choice === undefined) {
+                return undefined;
+            } else if (choice === '.') {
+                return id;
+            } else {
+                const caty = categories.find(c => c.name === choice)!;
+                return this.selectCategory(caty.custom_data, caty.list);
+            }
+        } else {
+            return id;
+        }
+    }
+
     async addFeed(feed: string) {
+        const category_id = await this.selectCategory(0, this.feed_tree);
+        if (category_id === undefined) {
+            return;
+        }
         await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: "Updating RSS...",
             cancellable: false
         }, async () => {
             try {
-                await this._addFeed(feed);
+                await this._addFeed(feed, category_id);
             } catch (error) {
                 vscode.window.showErrorMessage('Add feed failed: ' + error.toString());
             }
@@ -419,6 +485,36 @@ export class TTRSSCollection extends Collection {
         });
     }
 
+    async addToFavorites(link: string) {
+        const abstract = this.getAbstract(link);
+        if (abstract) {
+            await this.request({
+                op: "updateArticle",
+                article_ids: `${abstract.custom_data}`,
+                field: 0,
+                mode: 1,
+            });
+            abstract.starred = true;
+            this.updateAbstract(link, abstract);
+            await this.commit();
+        }
+    }
+
+    async removeFromFavorites(link: string) {
+        const abstract = this.getAbstract(link);
+        if (abstract) {
+            await this.request({
+                op: "updateArticle",
+                article_ids: `${abstract.custom_data}`,
+                field: 0,
+                mode: 0,
+            });
+            abstract.starred = false;
+            this.updateAbstract(link, abstract);
+            await this.commit();
+        }
+    }
+
     private async fetch(url: string, update: boolean) {
         const summary = this.getSummary(url);
         if (summary === undefined || summary.custom_data === undefined) {
@@ -432,7 +528,8 @@ export class TTRSSCollection extends Collection {
         const headlines = response.content as any[];
         const abstracts = [];
         for (const h of headlines) {
-            const abstract = new Abstract(h.title, h.updated * 1000, h.link, !h.unread, url, h.id);
+            const abstract = new Abstract(h.title, h.updated * 1000, h.link,
+                                         !h.unread, url, h.marked, h.id);
             abstracts.push(abstract);
             this.updateAbstract(abstract.link, abstract);
         }
@@ -469,23 +566,55 @@ export class TTRSSCollection extends Collection {
     }
 
     private async _fetchAll(update: boolean) {
-        const response = await this.request({op: 'getFeeds', cat_id: -3});
-        this.feed_list = response.content.map((feed: any) => feed.feed_url);
-        const feeds = new Set<string>(this.feed_list);
+        const res1 = await this.request({op: 'getFeedTree'});
+        const res2 = await this.request({op: 'getFeeds', cat_id: -3});
+        const list: any[] = res2.content;
+        const feed_map = new Map(list.map(
+            (feed: any): [number, string] => [feed.id, feed.feed_url]
+        ));
+        const feeds = new Set(feed_map.values());
+
+        const walk = (node: any[]) => {
+            const list: FeedTree = [];
+            for (const item of node) {
+                if (item.type === 'category') {
+                    if (item.bare_id < 0) {
+                        continue;
+                    }
+                    const sub = walk(item.items);
+                    if (item.bare_id === 0) {
+                        list.push(...sub);
+                    } else {
+                        list.push({
+                            name: item.name,
+                            list: sub,
+                            custom_data: item.bare_id
+                        });
+                    }
+                } else {
+                    const feed = feed_map.get(item.bare_id);
+                    if (feed === undefined) {
+                        continue;
+                    }
+                    list.push(feed);
+                    let summary = this.getSummary(feed);
+                    if (summary) {
+                        summary.title = item.name;
+                        summary.custom_data = item.bare_id;
+                    } else {
+                        summary = new Summary(feed, item.name, [], false, item.bare_id);
+                    }
+                    this.updateSummary(feed, summary);
+                }
+            }
+            return list;
+        };
+        this.feed_tree = walk(res1.content.categories.items);
+
         for (const feed of this.getFeeds()) {
             if (!feeds.has(feed)) {
                 this.updateSummary(feed, undefined);
             }
-        }
-        for (const feed of response.content) {
-            let summary = this.getSummary(feed.feed_url);
-            if (summary) {
-                summary.title = feed.title;
-                summary.custom_data = feed.id;
-            } else {
-                summary = new Summary(feed.feed_url, feed.title, [], false, feed.id);
-            }
-            this.updateSummary(feed.feed_url, summary);
         }
         await Promise.all(this.getFeeds().map(url => this.fetch(url, update)));
         await this.commit();
@@ -553,7 +682,7 @@ export class TTRSSCollection extends Collection {
             vscode.window.showErrorMessage('Sync read status failed: ' + error.toString());
         }
 
-        await writeFile(pathJoin(this.dir, 'feed_list'), JSON.stringify(this.feed_list));
+        await writeFile(pathJoin(this.dir, 'feed_list'), JSON.stringify(this.feed_tree));
         await super.commit();
     }
 
