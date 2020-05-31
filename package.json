@@ -4,7 +4,7 @@
     "description": "A RSS reader embedded in Visual Studio Code",
     "license": "MIT",
     "icon": "logo.png",
-    "version": "0.4.1",
+    "version": "0.5.0",
     "publisher": "luyuhuang",
     "author": "luyuhuang",
     "homepage": "https://github.com/luyuhuang/vscode-rss.git",
@@ -118,7 +118,13 @@
             },
             {
                 "command": "rss.set-all-read",
-                "title": "Set all to read"
+                "title": "Set all to read",
+                "icon": "$(check)"
+            },
+            {
+                "command": "rss.set-account-read",
+                "title": "Set all to read",
+                "icon": "$(check)"
             },
             {
                 "command": "rss.add-feed",
@@ -190,7 +196,17 @@
                     "group": "navigation"
                 },
                 {
+                    "command": "rss.set-account-read",
+                    "when": "view == rss-feeds",
+                    "group": "navigation"
+                },
+                {
                     "command": "rss.refresh-one",
+                    "when": "view == rss-articles",
+                    "group": "navigation"
+                },
+                {
+                    "command": "rss.set-all-read",
                     "when": "view == rss-articles",
                     "group": "navigation"
                 }
@@ -202,19 +218,24 @@
                     "group": "navigation@1"
                 },
                 {
-                    "command": "rss.del-account",
-                    "when": "view == rss-accounts",
-                    "group": "navigation@4"
-                },
-                {
-                    "command": "rss.account-rename",
+                    "command": "rss.set-account-read",
                     "when": "view == rss-accounts",
                     "group": "navigation@2"
                 },
                 {
+                    "command": "rss.account-rename",
+                    "when": "view == rss-accounts",
+                    "group": "navigation@3"
+                },
+                {
                     "command": "rss.account-modify",
                     "when": "view == rss-accounts && viewItem != local",
-                    "group": "navigation@3"
+                    "group": "navigation@4"
+                },
+                {
+                    "command": "rss.del-account",
+                    "when": "view == rss-accounts",
+                    "group": "navigation@5"
                 },
                 {
                     "command": "rss.open-link",

@@ -6,16 +6,20 @@ import { writeFile, readDir, checkDir, moveFile } from './utils';
 import * as uuid from 'uuid';
 
 export async function migrate(context: vscode.ExtensionContext) {
-    const version: string = vscode.extensions.getExtension('luyuhuang.rss')!.packageJSON.version;
     const old = context.globalState.get<string>('version', '0.0.1');
-    for (let i = VERSIONS.indexOf(old) + 1; i <= VERSIONS.indexOf(version); ++i) {
+    for (let i = VERSIONS.indexOf(old) + 1; i < VERSIONS.length; ++i) {
         const v = VERSIONS[i];
-        await alter[v](context);
+        if (v in alter) {
+            await alter[v](context);
+        }
     }
-    await context.globalState.update('version', version);
+    await context.globalState.update('version', VERSIONS[VERSIONS.length - 1]);
 }
 
-const VERSIONS = ['0.3.1', '0.4.0'];
+const VERSIONS = [
+    '0.0.1', '0.0.2', '0.0.3', '0.0.4', '0.0.5', '0.1.0', '0.2.0', '0.2.1',
+    '0.2.2', '0.3.0', '0.3.1', '0.4.0', '0.4.1', '0.5.0',
+];
 
 const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} = {
     '0.3.1': async (context) => {

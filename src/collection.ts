@@ -488,30 +488,42 @@ export class TTRSSCollection extends Collection {
     async addToFavorites(link: string) {
         const abstract = this.getAbstract(link);
         if (abstract) {
-            await this.request({
-                op: "updateArticle",
-                article_ids: `${abstract.custom_data}`,
-                field: 0,
-                mode: 1,
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: "Syncing...",
+                cancellable: false
+            }, async () => {
+                await this.request({
+                    op: "updateArticle",
+                    article_ids: `${abstract.custom_data}`,
+                    field: 0,
+                    mode: 1,
+                });
+                abstract.starred = true;
+                this.updateAbstract(link, abstract);
+                await this.commit();
             });
-            abstract.starred = true;
-            this.updateAbstract(link, abstract);
-            await this.commit();
         }
     }
 
     async removeFromFavorites(link: string) {
         const abstract = this.getAbstract(link);
         if (abstract) {
-            await this.request({
-                op: "updateArticle",
-                article_ids: `${abstract.custom_data}`,
-                field: 0,
-                mode: 0,
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: "Syncing...",
+                cancellable: false
+            }, async () => {
+                await this.request({
+                    op: "updateArticle",
+                    article_ids: `${abstract.custom_data}`,
+                    field: 0,
+                    mode: 0,
+                });
+                abstract.starred = false;
+                this.updateAbstract(link, abstract);
+                await this.commit();
             });
-            abstract.starred = false;
-            this.updateAbstract(link, abstract);
-            await this.commit();
         }
     }
 

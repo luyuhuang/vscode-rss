@@ -23,17 +23,6 @@ export class FavoritesList implements vscode.TreeDataProvider<vscode.TreeItem> {
     }
 }
 
-class Favorites extends vscode.TreeItem {
-    constructor(
-        public name: string,
-        public index: number
-    ) {
-        super(name, index === 0 ?
-            vscode.TreeItemCollapsibleState.Expanded :
-            vscode.TreeItemCollapsibleState.Collapsed);
-    }
-}
-
 export class Item extends Article {
     constructor(
         public abstract: Abstract,

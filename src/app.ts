@@ -167,6 +167,7 @@ export class App {
             ['rss.set-read', this.rss_set_read],
             ['rss.set-unread', this.rss_set_unread],
             ['rss.set-all-read', this.rss_set_all_read],
+            ['rss.set-account-read', this.rss_set_account_read],
             ['rss.refresh', this.rss_refresh],
             ['rss.refresh-account', this.rss_refresh_account],
             ['rss.refresh-one', this.rss_refresh_one],
@@ -228,15 +229,31 @@ export class App {
         await this.currCollection().updateAbstract(abstract.link, abstract).commit();
     }
 
-    async rss_set_all_read(feed: Feed) {
-        for (const link of feed.summary.catelog) {
-            const abs = this.currCollection().getAbstract(link)!;
-            abs.read = true;
-            this.currCollection().updateAbstract(link, abs);
+    async rss_set_all_read(feed?: Feed) {
+        let abstracts: Abstract[];
+        if (feed) {
+            abstracts = this.currCollection().getArticles(feed.feed);
+        } else {
+            abstracts = this.currArticles();
+        }
+        for (const abstract of abstracts) {
+            abstract.read = true;
+            this.currCollection().updateAbstract(abstract.link, abstract);
         }
         this.refreshLists();
 
         await this.currCollection().commit();
+    }
+
+    async rss_set_account_read(account?: Account) {
+        const collection = account ?
+            this.collections[account.key] : this.currCollection();
+        for (const abstract of collection.getArticles('<unread>')) {
+            abstract.read = true;
+            collection.updateAbstract(abstract.link, abstract);
+        }
+        this.refreshLists();
+        await collection.commit();
     }
 
     async rss_refresh(auto: boolean) {
