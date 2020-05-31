@@ -80,6 +80,8 @@ function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | un
         content = extractText(dom.description);
     } else if ('summary' in dom) {
         content = extractText(dom.summary);
+    } else {
+        content = title;
     }
     if (!isString(content)) {
         throw new Error("Feed Format Error: Entry Missing Content");
