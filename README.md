@@ -6,6 +6,8 @@ A RSS reader embedded in Visual Studio Code
 
 ![demonstrate1](https://s1.ax1x.com/2020/05/20/YoIhK1.gif)
 
+[简体中文](README_zh.md)
+
 ## Introduction
 
 VSCode-RSS is a Visual Studio Code extension that provides an embedded RSS reader. With it you can read news and blog freely in VSCode after long time of coding. [Tiny Tiny RSS](https://tt-rss.org/) is now supported, which allows you to sync RSS between devices. VSCode-RSS is easy to use and require little to manually modify the configuration.
