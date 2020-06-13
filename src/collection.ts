@@ -539,7 +539,7 @@ export class TTRSSCollection extends Collection {
         const response = await this.request({
             op: 'getHeadlines',
             feed_id: summary.custom_data,
-            view_mode: App.cfg.get('fetch-unread-only') ? 'unread': 'all',
+            view_mode: App.cfg.get('fetch-unread-only') ? 'unread': 'all_articles',
         });
         const headlines = response.content as any[];
         const abstracts: Abstract[] = [];
