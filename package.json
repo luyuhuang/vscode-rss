@@ -52,6 +52,11 @@
                     "type": "integer",
                     "default": 1,
                     "description": "Request retries"
+                },
+                "rss.fetch-unread-only": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Fetch unread articles only, for TTRSS"
                 }
             }
         },

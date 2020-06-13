@@ -536,18 +536,32 @@ export class TTRSSCollection extends Collection {
             return;
         }
 
-        const response = await this.request({op: 'getHeadlines', feed_id: summary.custom_data});
+        const response = await this.request({
+            op: 'getHeadlines',
+            feed_id: summary.custom_data,
+            view_mode: App.cfg.get('fetch-unread-only') ? 'unread': 'all',
+        });
         const headlines = response.content as any[];
-        const abstracts = [];
+        const abstracts: Abstract[] = [];
+        const link_set = new Set<string>();
         for (const h of headlines) {
             const abstract = new Abstract(h.title, h.updated * 1000, h.link,
                                          !h.unread, url, h.marked, h.id);
             abstracts.push(abstract);
+            link_set.add(abstract.link);
             this.updateAbstract(abstract.link, abstract);
         }
 
+        for (const link of summary.catelog) {
+            if (!link_set.has(link)) {
+                const abstract = this.getAbstract(link);
+                if (abstract) {
+                    abstracts.push(abstract);
+                }
+            }
+        }
+
         abstracts.sort((a, b) => b.date - a.date);
-        summary.ok = true;
         summary.catelog = abstracts.map(a => a.link);
         this.updateSummary(url, summary);
     }
@@ -611,6 +625,7 @@ export class TTRSSCollection extends Collection {
                     list.push(feed);
                     let summary = this.getSummary(feed);
                     if (summary) {
+                        summary.ok = item.error.length <= 0;
                         summary.title = item.name;
                         summary.custom_data = item.bare_id;
                     } else {
