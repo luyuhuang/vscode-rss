@@ -201,13 +201,69 @@ export class App {
         this.refreshLists(App.ARTICLE);
     }
 
+    private getHTML(content: string, panel: vscode.WebviewPanel) {
+        const css = '<style type="text/css">body{font-size:1em;max-width:960px;margin:auto;}</style>';
+        const star_path = vscode.Uri.file(pathJoin(this.context.extensionPath, 'resources/star.svg'));
+        const star_src = panel.webview.asWebviewUri(star_path);
+        let html = css + content + `
+        <style>
+        .float-btn {
+            width: 2.2rem;
+            height: 2.2rem;
+            position: fixed;
+            right: 0.5rem;
+            z-index: 9999;
+            transition-duration: 0.3s;
+        }
+        .float-btn:hover {
+            filter: brightness(130%);
+        }
+        .float-btn:active {
+            filter: brightness(70%);
+        }
+        </style>
+        <script type="text/javascript">
+        const vscode = acquireVsCodeApi();
+        function star() {
+            vscode.postMessage('star')
+        }
+        function next() {
+            vscode.postMessage('next')
+        }
+        </script>
+        <img src="${star_src}" title="Add to favorites" onclick="star()" class="float-btn" style="bottom:1rem;"/>
+        `;
+        if (this.currCollection().getArticles('<unread>').length > 0) {
+            const next_path = vscode.Uri.file(pathJoin(this.context.extensionPath, 'resources/next.svg'));
+            const next_src = panel.webview.asWebviewUri(next_path);
+            html += `<img src="${next_src}" title="Next" onclick="next()" class="float-btn" style="bottom:4rem;"/>`;
+        }
+        return html;
+    }
+
     async rss_read(abstract: Abstract) {
         const content = await this.currCollection().getContent(abstract.link);
         const panel = vscode.window.createWebviewPanel(
-            'rss', abstract.title, vscode.ViewColumn.One, {retainContextWhenHidden: true});
-        const css = '<style type="text/css">body{font-size:1em;max-width:960px;margin:auto;}</style>';
-        panel.webview.html = css + content;
+            'rss', abstract.title, vscode.ViewColumn.One,
+            {retainContextWhenHidden: true, enableScripts: true});
+
         abstract.read = true;
+        panel.title = abstract.title;
+        panel.webview.html = this.getHTML(content, panel);
+        panel.webview.onDidReceiveMessage(async (e) => {
+            if (e === 'star') {
+                await this.currCollection().addToFavorites(abstract.link);
+                this.refreshLists(App.FAVORITES);
+            } else if (e === 'next') {
+                const unread = this.currCollection().getArticles('<unread>');
+                if (unread.length > 0) {
+                    const abs = unread[0];
+                    panel.dispose();
+                    await this.rss_read(abs);
+                }
+            }
+        });
+
         this.refreshLists();
 
         await this.currCollection().updateAbstract(abstract.link, abstract).commit();

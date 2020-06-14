@@ -629,7 +629,7 @@ export class TTRSSCollection extends Collection {
                         summary.title = item.name;
                         summary.custom_data = item.bare_id;
                     } else {
-                        summary = new Summary(feed, item.name, [], false, item.bare_id);
+                        summary = new Summary(feed, item.name, [], true, item.bare_id);
                     }
                     this.updateSummary(feed, summary);
                 }
