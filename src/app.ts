@@ -218,15 +218,15 @@ export class App {
             position: fixed;
             right: 0.5rem;
             z-index: 9999;
-            filter: drop-shadow(0 0 0.3rem rgba(0,0,0,.7));
+            filter: drop-shadow(0 0 0.2rem rgba(0,0,0,.5));
             transition-duration: 0.3s;
         }
         .float-btn:hover {
-            filter: drop-shadow(0 0 0.3rem rgba(0,0,0,.7))
+            filter: drop-shadow(0 0 0.2rem rgba(0,0,0,.5))
                     brightness(130%);
         }
         .float-btn:active {
-            filter: drop-shadow(0 0 0.3rem rgba(0,0,0,.7))
+            filter: drop-shadow(0 0 0.2rem rgba(0,0,0,.5))
                     brightness(80%);
         }
         </style>
