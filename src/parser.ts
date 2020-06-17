@@ -226,7 +226,9 @@ export function parseXML(xml: string, exclude: Set<string>): [Entry[], Summary] 
         items = feed.entry;
     }
     if (!items) {
-        throw new Error('Feed Format Error');
+        items = [];
+    } else if (!isArray(items)) {
+        items = [items];
     }
 
     const entries: Entry[] = [];
