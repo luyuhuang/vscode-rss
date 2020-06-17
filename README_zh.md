@@ -3,6 +3,7 @@
 嵌入在 Visual Studio Code 中的 RSS 阅读器
 
 [![version](https://vsmarketplacebadge.apphb.com/version/luyuhuang.rss.svg)](https://marketplace.visualstudio.com/items?itemName=luyuhuang.rss)
+[![test](https://github.com/luyuhuang/vscode-rss/workflows/test/badge.svg)](https://github.com/luyuhuang/vscode-rss/actions/)
 
 ![demonstrate1](https://s1.ax1x.com/2020/05/20/YoIhK1.gif)
 
