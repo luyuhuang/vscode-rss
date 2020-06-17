@@ -203,8 +203,13 @@ export class App {
 
     private getHTML(content: string, panel: vscode.WebviewPanel) {
         const css = '<style type="text/css">body{font-size:1em;max-width:960px;margin:auto;}</style>';
+
         const star_path = vscode.Uri.file(pathJoin(this.context.extensionPath, 'resources/star.svg'));
         const star_src = panel.webview.asWebviewUri(star_path);
+
+        const web_path = vscode.Uri.file(pathJoin(this.context.extensionPath, 'resources/web.svg'));
+        const web_src = panel.webview.asWebviewUri(web_path);
+
         let html = css + content + `
         <style>
         .float-btn {
@@ -213,13 +218,16 @@ export class App {
             position: fixed;
             right: 0.5rem;
             z-index: 9999;
+            filter: drop-shadow(0 0 0.3rem rgba(0,0,0,.7));
             transition-duration: 0.3s;
         }
         .float-btn:hover {
-            filter: brightness(130%);
+            filter: drop-shadow(0 0 0.3rem rgba(0,0,0,.7))
+                    brightness(130%);
         }
         .float-btn:active {
-            filter: brightness(70%);
+            filter: drop-shadow(0 0 0.3rem rgba(0,0,0,.7))
+                    brightness(80%);
         }
         </style>
         <script type="text/javascript">
@@ -230,13 +238,17 @@ export class App {
         function next() {
             vscode.postMessage('next')
         }
+        function web() {
+            vscode.postMessage('web')
+        }
         </script>
-        <img src="${star_src}" title="Add to favorites" onclick="star()" class="float-btn" style="bottom:1rem;"/>
+        <img src="${web_src}" title="Open link" onclick="web()" class="float-btn" style="bottom:1rem;"/>
+        <img src="${star_src}" title="Add to favorites" onclick="star()" class="float-btn" style="bottom:4rem;"/>
         `;
         if (this.currCollection().getArticles('<unread>').length > 0) {
             const next_path = vscode.Uri.file(pathJoin(this.context.extensionPath, 'resources/next.svg'));
             const next_src = panel.webview.asWebviewUri(next_path);
-            html += `<img src="${next_src}" title="Next" onclick="next()" class="float-btn" style="bottom:4rem;"/>`;
+            html += `<img src="${next_src}" title="Next" onclick="next()" class="float-btn" style="bottom:7rem;"/>`;
         }
         return html;
     }
@@ -251,7 +263,9 @@ export class App {
         panel.title = abstract.title;
         panel.webview.html = this.getHTML(content, panel);
         panel.webview.onDidReceiveMessage(async (e) => {
-            if (e === 'star') {
+            if (e === 'web') {
+                vscode.env.openExternal(vscode.Uri.parse(abstract.link));
+            } else if (e === 'star') {
                 await this.currCollection().addToFavorites(abstract.link);
                 this.refreshLists(App.FAVORITES);
             } else if (e === 'next') {
