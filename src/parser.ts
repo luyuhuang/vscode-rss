@@ -31,6 +31,38 @@ function parseLink(link: any) {
     return ans;
 }
 
+function dom2html(name: string, node: any) {
+    if (isString(node)) {
+        return `<${name}>${node}</${name}>`;
+    }
+
+    let html = '<' + name;
+    if ('__attr' in node) {
+        for (const key in node.__attr) {
+            const value = node.__attr[key];
+            html += ` ${key}="${value}"`;
+        }
+    }
+    html += '>';
+
+    if (isString(node.__text)) {
+        html += node.__text;
+    }
+    for (const key in node) {
+        if (key.startsWith('__')) {continue;}
+        const value = node[key];
+        if (isArray(value)) {
+            for (const item of value) {
+                html += dom2html(key, item);
+            }
+        } else {
+            html += dom2html(key, value);
+        }
+    }
+    html += `</${name}>`;
+    return html;
+}
+
 function extractText(content: any) {
     let ans;
     if (isString(content)) {
@@ -43,6 +75,9 @@ function extractText(content: any) {
         } else if(isArray(content.__cdata)) {
             ans = content.__cdata.join('');
         }
+    } else if (content.__attr?.type === 'html') {
+        // XXX: temporary solution. convert dom object to html string.
+        ans = dom2html('html', content);
     }
     return ans;
 }
