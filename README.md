@@ -42,5 +42,6 @@ You can modify the configuration as needed.
 | `rss.interval` | `integer` | Automatic refresh interval (s) |
 | `rss.timeout` | `integer` | Request timeout (s) |
 | `rss.retry` | `integer` | Request retries |
+| `rss.fetch-unread-only` | `boolean` | Whether to fetch unread articles only, for TTRSS |
 
 Enjoy it!

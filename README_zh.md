@@ -42,5 +42,6 @@ VSCode-RSS 支持两种类型的账户, 本地账户和 ttrss(Tiny Tiny RSS) 账
 | `rss.interval` | `integer` | 自动刷新的时间间隔 (秒) |
 | `rss.timeout` | `integer` | 请求超时时间 (秒) |
 | `rss.retry` | `integer` | 请求重试次数 |
+| `rss.fetch-unread-only` | `boolean` | 对于 TTRSS, 是否仅获取未读文章 |
 
 Enjoy it!
