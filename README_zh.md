@@ -5,7 +5,7 @@
 [![version](https://vsmarketplacebadge.apphb.com/version/luyuhuang.rss.svg)](https://marketplace.visualstudio.com/items?itemName=luyuhuang.rss)
 [![test](https://github.com/luyuhuang/vscode-rss/workflows/test/badge.svg)](https://github.com/luyuhuang/vscode-rss/actions/)
 
-![demonstrate1](https://s1.ax1x.com/2020/05/20/YoIhK1.gif)
+![demonstrate1](https://s1.ax1x.com/2020/06/18/Nmyedf.gif)
 
 [English](README.md)
 

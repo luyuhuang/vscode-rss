@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.6.0 (2020-06-18)
+
+- Add shortcut floating Buttons at the right bottom
+- Add an option to fetch unread articles only
+- Fix #2
+
 ## v0.5.0 (2020-05-31)
 
 - Support category
