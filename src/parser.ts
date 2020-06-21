@@ -20,13 +20,23 @@ function order(attr: any) {
 }
 
 function parseLink(link: any) {
+    if (isArray(link) && link.length > 0) {
+        link = link.reduce((a, b) => order(a.__attr) > order(b.__attr) ? a : b);
+    }
+
     let ans;
     if (isString(link)) {
         ans = link;
-    } else if (isArray(link) && link.length > 0) {
-        ans = link.reduce((a, b) => order(a.__attr) > order(b.__attr) ? a : b).__attr.href;
-    } else if (link.__attr) {
+    } else if (isString(link.__attr?.href)) {
         ans = link.__attr.href;
+    } else if (isString(link.__text)) {
+        ans = link.__text;
+    } else if ('__cdata' in link) {
+        if (isString(link.__cdata)) {
+            ans = link.__cdata;
+        } else if(isArray(link.__cdata)) {
+            ans = link.__cdata.join('');
+        }
     }
     return ans;
 }
