@@ -5,4 +5,4 @@ node_modules
 package-lock.json
 .history
 tsconfig.json
-package.json 
+package.json
