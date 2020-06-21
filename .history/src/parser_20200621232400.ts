@@ -94,29 +94,27 @@ function extractText(content: any) {
 
 function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | undefined {
     let link;
-
-    let title;
-    if ('title' in dom) {
-        title = extractText(dom.title);
-    }
-    if (!isString(title)) {
-        // throw new Error("Feed Format Error: Entry Missing Title");
-        title = "Untitled"
-    }
-    title = he.decode(title);
     if (dom.link) {
         link = parseLink(dom.link);
     } else if (dom.source) {
         link = dom.source;
     }
     if (!isString(link)) {
-        // throw new Error("Feed Format Error: Entry Missing Link");
-        link = "https://www.baidu.com/s?ie=UTF-8&wd=" + title
+        throw new Error("Feed Format Error: Entry Missing Link");
     }
     link = new URL(link, baseURL).href;
     if (exclude.has(link)) {
         return undefined;
     }
+
+    let title;
+    if ('title' in dom) {
+        title = extractText(dom.title);
+    }
+    if (!isString(title)) {
+        throw new Error("Feed Format Error: Entry Missing Title");
+    }
+    title = he.decode(title);
 
     let content;
     if ('content' in dom) {
@@ -131,8 +129,7 @@ function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | un
         content = title;
     }
     if (!isString(content)) {
-        // throw new Error("Feed Format Error: Entry Missing Content");
-        content = title;
+        throw new Error("Feed Format Error: Entry Missing Content");
     }
     content = he.decode(content);
     const $ = cheerio.load(content);
@@ -164,14 +161,11 @@ function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | un
         date = dom["dc:date"];
     }
     if (!isString(date)) {
-        // throw new Error("Feed Format Error: Entry Missing Date");
-        date = "1970-01-01"
-
+        throw new Error("Feed Format Error: Entry Missing Date");
     }
     date = new Date(date).getTime();
     if (isNaN(date)) {
-        // throw new Error("Feed Format Error: Invalid Date");
-        date = "1970-01-01"
+        throw new Error("Feed Format Error: Invalid Date");
     }
 
     return new Entry(title, content, date, link, false);
@@ -214,8 +208,7 @@ export function parseXML(xml: string, exclude: Set<string>): [Entry[], Summary] 
         title = extractText(feed.channel.title);
     }
     if (!isString(title)) {
-        // throw new Error('Feed Format Error: Missing Title');
-        title = "Untitled"
+        throw new Error('Feed Format Error: Missing Title');
     }
     title = he.decode(title);
 
@@ -226,8 +219,7 @@ export function parseXML(xml: string, exclude: Set<string>): [Entry[], Summary] 
         link = parseLink(feed.channel.link);
     }
     if (!isString(link)) {
-        // throw new Error('Feed Format Error: Missing Link');
-        link = "https://www.baidu.com/s?ie=UTF-8&wd=" + title
+        throw new Error('Feed Format Error: Missing Link');
     }
     if (!link.match(/^https?:\/\//)) {
         if (link.match(/^\/\//)) {
