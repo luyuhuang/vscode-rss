@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.6.1 (2020-06-21)
+
+- Deal with links with CDATA(close #6)
+
 ## v0.6.0 (2020-06-18)
 
 - Add shortcut floating Buttons at the right bottom
