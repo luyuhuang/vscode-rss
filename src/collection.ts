@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as cheerio from 'cheerio';
 import { join as pathJoin } from 'path';
 import got from 'got';
 import { parseXML } from './parser';
@@ -579,8 +580,11 @@ export class TTRSSCollection extends Collection {
                         op: 'getArticle', article_id: abstract.custom_data
                     });
                     const content = response.content[0].content;
-                    await this.updateContent(link, content);
-                    return content;
+                    const $ = cheerio.load(content);
+                    $('script').remove();
+                    const html = $.html();
+                    await this.updateContent(link, html);
+                    return html;
                 } catch (error) {
                     vscode.window.showErrorMessage('Fetch content failed: ' + error.toString());
                     throw error;
