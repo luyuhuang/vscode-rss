@@ -99,11 +99,25 @@ function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | un
     } else if (dom.source) {
         link = dom.source;
     }
-    if (!isString(link)) {
-        throw new Error("Feed Format Error: Entry Missing Link");
+    if (isString(link)) {
+        link = new URL(link, baseURL).href;
+    } else {
+        link = undefined;
     }
-    link = new URL(link, baseURL).href;
-    if (exclude.has(link)) {
+
+    let id;
+    if (dom.id) {
+        id = extractText(dom.id);
+    } else if (dom.guid) {
+        id = extractText(dom.guid);
+    } else {
+        id = link;
+    }
+    if (!isString(id)) {
+        throw new Error("Feed Format Error: Entry Missing ID");
+    }
+
+    if (exclude.has(id)) {
         return undefined;
     }
 
@@ -169,7 +183,7 @@ function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | un
         throw new Error("Feed Format Error: Invalid Date");
     }
 
-    return new Entry(title, content, date, link, false);
+    return new Entry(id, title, content, date, link, false);
 }
 
 export function parseXML(xml: string, exclude: Set<string>): [Entry[], Summary] {

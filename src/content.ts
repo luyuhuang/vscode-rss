@@ -1,18 +1,20 @@
 export class Entry {
     constructor(
+        public id: string,
         public title: string,
         public content: string,
         public date: number,
-        public link: string,
+        public link: string | undefined,
         public read: boolean,
     ) {}
 }
 
 export class Abstract {
     constructor(
+        public readonly id: string,
         public title: string,
         public date: number,
-        public readonly link: string,
+        public link: string | undefined,
         public read: boolean,
         public feed: string,
         public starred: boolean = false,
@@ -20,7 +22,7 @@ export class Abstract {
     ) {}
 
     static fromEntry(entry: Entry, feed: string) {
-        return new Abstract(entry.title, entry.date, entry.link, entry.read, feed);
+        return new Abstract(entry.id, entry.title, entry.date, entry.link, entry.read, feed);
     }
 }
 
@@ -55,11 +57,11 @@ export class Storage {
         return new Storage(obj.feed, obj.link, obj.title, obj.abstracts, obj.ok, obj.custom_data);
     }
 
-    toSummary(set: (link: string, abstract: Abstract) => void): [string, Summary] {
-        const summary = new Summary(this.link, this.title, this.abstracts.map(abs => abs.link),
+    toSummary(set: (id: string, abstract: Abstract) => void): [string, Summary] {
+        const summary = new Summary(this.link, this.title, this.abstracts.map(abs => abs.id),
                                     this.ok, this.custom_data);
         for (const abstract of this.abstracts) {
-            set(abstract.link, abstract);
+            set(abstract.id, abstract);
         }
         return [this.feed, summary];
     }

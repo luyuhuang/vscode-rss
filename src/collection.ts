@@ -9,7 +9,7 @@ import { checkDir, writeFile, readFile, removeFile, removeDir, fileExists, readD
 
 export abstract class Collection {
     private summaries: {[url: string]: Summary} = {};
-    private abstracts: {[link: string]: Abstract} = {};
+    private abstracts: {[id: string]: Abstract} = {};
     protected dirty_summaries = new Set<string>();
 
     constructor(
@@ -24,7 +24,7 @@ export abstract class Collection {
         const feeds = await readDir(pathJoin(this.dir, 'feeds'));
         for (const feed of feeds) {
             const json = await readFile(pathJoin(this.dir, 'feeds', feed));
-            const [url, summary] = Storage.fromJSON(json).toSummary((link, abstract) => {this.abstracts[link] = abstract;});
+            const [url, summary] = Storage.fromJSON(json).toSummary((id, abstract) => {this.abstracts[id] = abstract;});
             this.summaries[url] = summary;
         }
     }
@@ -45,15 +45,15 @@ export abstract class Collection {
     abstract get type(): string;
     abstract async addFeed(feed: string): Promise<void>;
     abstract async delFeed(feed: string): Promise<void>;
-    abstract async addToFavorites(link: string): Promise<void>;
-    abstract async removeFromFavorites(link: string): Promise<void>;
+    abstract async addToFavorites(id: string): Promise<void>;
+    abstract async removeFromFavorites(id: string): Promise<void>;
 
     getSummary(url: string): Summary | undefined {
         return this.summaries[url];
     }
 
-    getAbstract(link: string): Abstract | undefined {
-        return this.abstracts[link];
+    getAbstract(id: string): Abstract | undefined {
+        return this.abstracts[id];
     }
 
     getFeedList(): FeedTree {
@@ -77,8 +77,8 @@ export abstract class Collection {
             const summary = this.getSummary(feed);
             const list: Abstract[] = [];
             if (summary !== undefined) {
-                for (const link of summary.catelog) {
-                    const abstract = this.getAbstract(link);
+                for (const id of summary.catelog) {
+                    const abstract = this.getAbstract(id);
                     if (abstract) {
                         list.push(abstract);
                     }
@@ -98,8 +98,8 @@ export abstract class Collection {
         return list;
     }
 
-    async getContent(link: string) {
-        const file = pathJoin(this.dir, 'articles', encodeURIComponent(link));
+    async getContent(id: string) {
+        const file = pathJoin(this.dir, 'articles', encodeURIComponent(id));
         try {
             return await readFile(file);
         } catch (error) {
@@ -108,16 +108,16 @@ export abstract class Collection {
         }
     }
 
-    updateAbstract(link: string, abstract?: Abstract) {
+    updateAbstract(id: string, abstract?: Abstract) {
         if (abstract === undefined) {
-            const old = this.getAbstract(link);
+            const old = this.getAbstract(id);
             if (old) {
                 this.dirty_summaries.add(old.feed);
-                delete this.abstracts[link];
+                delete this.abstracts[id];
             }
         } else {
             this.dirty_summaries.add(abstract.feed);
-            this.abstracts[link] = abstract;
+            this.abstracts[id] = abstract;
         }
         return this;
     }
@@ -132,8 +132,8 @@ export abstract class Collection {
         return this;
     }
 
-    async updateContent(link: string, content: string | undefined) {
-        const file = pathJoin(this.dir, 'articles', encodeURIComponent(link));
+    async updateContent(id: string, content: string | undefined) {
+        const file = pathJoin(this.dir, 'articles', encodeURIComponent(id));
         if (content === undefined) {
             await removeFile(file);
         } else {
@@ -147,9 +147,9 @@ export abstract class Collection {
             return;
         }
         this.updateSummary(url, undefined);
-        for (const link of summary.catelog) {
-            this.updateAbstract(link, undefined);
-            await this.updateContent(link, undefined);
+        for (const id of summary.catelog) {
+            this.updateAbstract(id, undefined);
+            await this.updateContent(id, undefined);
         }
         return this;
     }
@@ -161,7 +161,7 @@ export abstract class Collection {
             if (summary === undefined) {
                 await removeFile(path);
             } else {
-                const json = Storage.fromSummary(feed, summary, link => this.abstracts[link]).toJSON();
+                const json = Storage.fromSummary(feed, summary, id => this.abstracts[id]).toJSON();
                 await writeFile(path, json);
             }
         }
@@ -243,20 +243,20 @@ export class LocalCollection extends Collection {
         await this.updateCfg();
     }
 
-    async addToFavorites(link: string) {
-        const abstract = this.getAbstract(link);
+    async addToFavorites(id: string) {
+        const abstract = this.getAbstract(id);
         if (abstract) {
             abstract.starred = true;
-            this.updateAbstract(link, abstract);
+            this.updateAbstract(id, abstract);
             await this.commit();
         }
     }
 
-    async removeFromFavorites(link: string) {
-        const abstract = this.getAbstract(link);
+    async removeFromFavorites(id: string) {
+        const abstract = this.getAbstract(id);
         if (abstract) {
             abstract.starred = false;
-            this.updateAbstract(link, abstract);
+            this.updateAbstract(id, abstract);
             await this.commit();
         }
     }
@@ -268,8 +268,8 @@ export class LocalCollection extends Collection {
         }
 
         const abstracts: Abstract[] = [];
-        for (const link of summary.catelog) {
-            const abstract = this.getAbstract(link);
+        for (const id of summary.catelog) {
+            const abstract = this.getAbstract(id);
             if (abstract !== undefined) {
                 abstracts.push(abstract);
             }
@@ -291,14 +291,14 @@ export class LocalCollection extends Collection {
         }
 
         for (const entry of entries) {
-            await this.updateContent(entry.link, entry.content);
+            await this.updateContent(entry.id, entry.content);
             const abstract = Abstract.fromEntry(entry, url);
-            this.updateAbstract(abstract.link, abstract);
+            this.updateAbstract(abstract.id, abstract);
             abstracts.push(abstract);
         }
 
         abstracts.sort((a, b) => b.date - a.date);
-        summary.catelog = abstracts.map(a => a.link);
+        summary.catelog = abstracts.map(a => a.id);
         this.updateSummary(url, summary);
     }
 
@@ -486,8 +486,8 @@ export class TTRSSCollection extends Collection {
         });
     }
 
-    async addToFavorites(link: string) {
-        const abstract = this.getAbstract(link);
+    async addToFavorites(id: string) {
+        const abstract = this.getAbstract(id);
         if (abstract) {
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
@@ -501,14 +501,14 @@ export class TTRSSCollection extends Collection {
                     mode: 1,
                 });
                 abstract.starred = true;
-                this.updateAbstract(link, abstract);
+                this.updateAbstract(id, abstract);
                 await this.commit();
             });
         }
     }
 
-    async removeFromFavorites(link: string) {
-        const abstract = this.getAbstract(link);
+    async removeFromFavorites(id: string) {
+        const abstract = this.getAbstract(id);
         if (abstract) {
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
@@ -522,7 +522,7 @@ export class TTRSSCollection extends Collection {
                     mode: 0,
                 });
                 abstract.starred = false;
-                this.updateAbstract(link, abstract);
+                this.updateAbstract(id, abstract);
                 await this.commit();
             });
         }
@@ -544,18 +544,18 @@ export class TTRSSCollection extends Collection {
         });
         const headlines = response.content as any[];
         const abstracts: Abstract[] = [];
-        const link_set = new Set<string>();
+        const ids = new Set<string>();
         for (const h of headlines) {
-            const abstract = new Abstract(h.title, h.updated * 1000, h.link,
+            const abstract = new Abstract(h.id, h.title, h.updated * 1000, h.link,
                                          !h.unread, url, h.marked, h.id);
             abstracts.push(abstract);
-            link_set.add(abstract.link);
-            this.updateAbstract(abstract.link, abstract);
+            ids.add(abstract.id);
+            this.updateAbstract(abstract.id, abstract);
         }
 
-        for (const link of summary.catelog) {
-            if (!link_set.has(link)) {
-                const abstract = this.getAbstract(link);
+        for (const id of summary.catelog) {
+            if (!ids.has(id)) {
+                const abstract = this.getAbstract(id);
                 if (abstract) {
                     abstracts.push(abstract);
                 }
@@ -563,19 +563,19 @@ export class TTRSSCollection extends Collection {
         }
 
         abstracts.sort((a, b) => b.date - a.date);
-        summary.catelog = abstracts.map(a => a.link);
+        summary.catelog = abstracts.map(a => a.id);
         this.updateSummary(url, summary);
     }
 
-    async getContent(link: string) {
-        if (!await fileExists(pathJoin(this.dir, 'articles', encodeURIComponent(link)))) {
+    async getContent(id: string) {
+        if (!await fileExists(pathJoin(this.dir, 'articles', encodeURIComponent(id)))) {
             return await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
                 title: "Fetching content...",
                 cancellable: false
             }, async () => {
                 try {
-                    const abstract = this.getAbstract(link)!;
+                    const abstract = this.getAbstract(id)!;
                     const response = await this.request({
                         op: 'getArticle', article_id: abstract.custom_data
                     });
@@ -583,7 +583,7 @@ export class TTRSSCollection extends Collection {
                     const $ = cheerio.load(content);
                     $('script').remove();
                     const html = $.html();
-                    await this.updateContent(link, html);
+                    await this.updateContent(id, html);
                     return html;
                 } catch (error) {
                     vscode.window.showErrorMessage('Fetch content failed: ' + error.toString());
@@ -591,7 +591,7 @@ export class TTRSSCollection extends Collection {
                 }
             });
         } else {
-            return await super.getContent(link);
+            return await super.getContent(id);
         }
     }
 
@@ -675,9 +675,9 @@ export class TTRSSCollection extends Collection {
         }
     }
 
-    updateAbstract(link: string, abstract?: Abstract) {
-        this.dirty_abstracts.add(link);
-        return super.updateAbstract(link, abstract);
+    updateAbstract(id: string, abstract?: Abstract) {
+        this.dirty_abstracts.add(id);
+        return super.updateAbstract(id, abstract);
     }
 
     private async syncReadStatus(list: number[], read: boolean) {
@@ -695,8 +695,8 @@ export class TTRSSCollection extends Collection {
     async commit() {
         const read_list: number[] = [];
         const unread_list: number[] = [];
-        for (const link of this.dirty_abstracts) {
-            const abstract = this.getAbstract(link);
+        for (const id of this.dirty_abstracts) {
+            const abstract = this.getAbstract(id);
             if (abstract) {
                 if (abstract.read) {
                     read_list.push(abstract.custom_data);

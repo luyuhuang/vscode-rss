@@ -32,9 +32,9 @@ export class Account extends vscode.TreeItem {
         this.contextValue = this.type;
         this.command = {command: 'rss.select', title: 'select', arguments: [this.key]};
 
-        const links = collection.getArticleList();
-        const unread_num = links.length === 0 ? 0
-            : links.map(link => Number(!collection.getAbstract(link)?.read))
+        const ids = collection.getArticleList();
+        const unread_num = ids.length === 0 ? 0
+            : ids.map(id => Number(!collection.getAbstract(id)?.read))
             .reduce((a, b) => a + b);
 
         if (unread_num > 0) {

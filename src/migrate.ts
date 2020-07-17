@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { join as pathJoin } from 'path';
 import { Summary, Entry, Abstract, Storage } from './content';
-import { writeFile, readDir, checkDir, moveFile } from './utils';
+import { writeFile, readDir, checkDir, moveFile, readFile, fileExists } from './utils';
 import * as uuid from 'uuid';
 
 export async function migrate(context: vscode.ExtensionContext) {
@@ -19,6 +19,7 @@ export async function migrate(context: vscode.ExtensionContext) {
 const VERSIONS = [
     '0.0.1', '0.0.2', '0.0.3', '0.0.4', '0.0.5', '0.1.0', '0.2.0', '0.2.1',
     '0.2.2', '0.3.0', '0.3.1', '0.4.0', '0.4.1', '0.5.0', '0.6.0', '0.6.1',
+    '0.7.0',
 ];
 
 const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} = {
@@ -94,5 +95,36 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
 
         await context.globalState.update('summaries', undefined);
         await context.globalState.update('abstracts', undefined);
+    },
+
+    '0.7.0': async (context) => {
+        const root = context.globalStoragePath;
+        await checkDir(root);
+
+        const cfg = vscode.workspace.getConfiguration('rss');
+        for (const key in cfg.accounts) {
+            const dir = pathJoin(root, key);
+            await checkDir(dir);
+            await checkDir(pathJoin(dir, 'feeds'));
+            const feeds = await readDir(pathJoin(dir, 'feeds'));
+            for (const feed of feeds) {
+                const file_name = pathJoin(dir, 'feeds', feed);
+                const json = await readFile(file_name);
+                const storage = JSON.parse(json);
+                for (const abstract of storage.abstracts) {
+                    if (cfg.accounts[key].type === 'local') {
+                        abstract.id = abstract.link;
+                    } else if (cfg.accounts[key].type === 'ttrss') {
+                        abstract.id = abstract.custom_data;
+                        const old = pathJoin(dir, 'articles', encodeURIComponent(abstract.link));
+                        if (await fileExists(old)) {
+                            await moveFile(old, pathJoin(dir, 'articles', encodeURIComponent(abstract.id)));
+                        }
+                    }
+                }
+                await writeFile(file_name, JSON.stringify(storage));
+            }
+
+        }
     }
 };

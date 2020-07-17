@@ -254,7 +254,7 @@ export class App {
     }
 
     async rss_read(abstract: Abstract) {
-        const content = await this.currCollection().getContent(abstract.link);
+        const content = await this.currCollection().getContent(abstract.id);
         const panel = vscode.window.createWebviewPanel(
             'rss', abstract.title, vscode.ViewColumn.One,
             {retainContextWhenHidden: true, enableScripts: true});
@@ -264,9 +264,11 @@ export class App {
         panel.webview.html = this.getHTML(content, panel);
         panel.webview.onDidReceiveMessage(async (e) => {
             if (e === 'web') {
-                vscode.env.openExternal(vscode.Uri.parse(abstract.link));
+                if (abstract.link) {
+                    vscode.env.openExternal(vscode.Uri.parse(abstract.link));
+                }
             } else if (e === 'star') {
-                await this.currCollection().addToFavorites(abstract.link);
+                await this.currCollection().addToFavorites(abstract.id);
                 this.refreshLists(App.FAVORITES);
             } else if (e === 'next') {
                 const unread = this.currCollection().getArticles('<unread>');
@@ -280,7 +282,7 @@ export class App {
 
         this.refreshLists();
 
-        await this.currCollection().updateAbstract(abstract.link, abstract).commit();
+        await this.currCollection().updateAbstract(abstract.id, abstract).commit();
     }
 
     async rss_set_read(article: Article) {
@@ -288,7 +290,7 @@ export class App {
         abstract.read = true;
         this.refreshLists();
 
-        await this.currCollection().updateAbstract(abstract.link, abstract).commit();
+        await this.currCollection().updateAbstract(abstract.id, abstract).commit();
     }
 
     async rss_set_unread(article: Article) {
@@ -296,7 +298,7 @@ export class App {
         abstract.read = false;
         this.refreshLists();
 
-        await this.currCollection().updateAbstract(abstract.link, abstract).commit();
+        await this.currCollection().updateAbstract(abstract.id, abstract).commit();
     }
 
     async rss_set_all_read(feed?: Feed) {
@@ -308,7 +310,7 @@ export class App {
         }
         for (const abstract of abstracts) {
             abstract.read = true;
-            this.currCollection().updateAbstract(abstract.link, abstract);
+            this.currCollection().updateAbstract(abstract.id, abstract);
         }
         this.refreshLists();
 
@@ -320,7 +322,7 @@ export class App {
             this.collections[account.key] : this.currCollection();
         for (const abstract of collection.getArticles('<unread>')) {
             abstract.read = true;
-            collection.updateAbstract(abstract.link, abstract);
+            collection.updateAbstract(abstract.id, abstract);
         }
         this.refreshLists();
         await collection.commit();
@@ -385,7 +387,9 @@ export class App {
     }
 
     rss_open_link(article: Article) {
-        vscode.env.openExternal(vscode.Uri.parse(article.abstract.link));
+        if (article.abstract.link) {
+            vscode.env.openExternal(vscode.Uri.parse(article.abstract.link));
+        }
     }
 
     async rss_add_feed() {
@@ -399,12 +403,12 @@ export class App {
     }
 
     async rss_add_to_favorites(article: Article) {
-        await this.currCollection().addToFavorites(article.abstract.link);
+        await this.currCollection().addToFavorites(article.abstract.id);
         this.refreshLists(App.FAVORITES);
     }
 
     async rss_remove_from_favorites(item: Item) {
-        await this.currCollection().removeFromFavorites(item.abstract.link);
+        await this.currCollection().removeFromFavorites(item.abstract.id);
         this.refreshLists(App.FAVORITES);
     }
 

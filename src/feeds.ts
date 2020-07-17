@@ -24,8 +24,8 @@ export class FeedList implements vscode.TreeDataProvider<vscode.TreeItem> {
                 if (summary === undefined) {
                     continue;
                 }
-                const unread_num = summary.catelog.length ? summary.catelog.map((link): number => {
-                    const abstract = collection.getAbstract(link);
+                const unread_num = summary.catelog.length ? summary.catelog.map((id): number => {
+                    const abstract = collection.getAbstract(id);
                     return abstract && !abstract.read ? 1 : 0;
                 }).reduce((a, b) => a + b) : 0;
                 unread_sum += unread_num;
