@@ -8,6 +8,7 @@ import { ArticleList, Article } from './articles';
 import { FavoritesList, Item } from './favorites';
 import { Abstract } from './content';
 import * as uuid from 'uuid';
+import { StatusBar } from './status_bar';
 
 export class App {
     private static _instance?: App;
@@ -21,11 +22,13 @@ export class App {
     private article_list = new ArticleList();
     private favorites_list = new FavoritesList();
 
+    private status_bar = new StatusBar();
+
     public collections: {[key: string]:collection.Collection} = {};
     public readonly root: string = this.context.globalStoragePath;
 
     private constructor(
-        private context: vscode.ExtensionContext
+        public readonly context: vscode.ExtensionContext
     ) {}
 
     private async initAccounts() {
@@ -121,8 +124,9 @@ export class App {
     public static readonly FEED = 1 << 1;
     public static readonly ARTICLE = 1 << 2;
     public static readonly FAVORITES = 1 << 3;
+    public static readonly STATUS_BAR = 1 << 4;
 
-    refreshLists(list: number=0b1111) {
+    refreshLists(list: number=0b11111) {
         if (list & App.ACCOUNT) {
             this.account_list.refresh();
         }
@@ -134,6 +138,9 @@ export class App {
         }
         if (list & App.FAVORITES) {
             this.favorites_list.refresh();
+        }
+        if (list & App.STATUS_BAR) {
+            this.status_bar.refresh();
         }
     }
 
@@ -157,6 +164,7 @@ export class App {
         vscode.window.registerTreeDataProvider('rss-feeds', this.feed_list);
         vscode.window.registerTreeDataProvider('rss-articles', this.article_list);
         vscode.window.registerTreeDataProvider('rss-favorites', this.favorites_list);
+        this.status_bar.init();
     }
 
     initCommands() {

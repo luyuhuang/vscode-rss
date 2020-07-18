@@ -57,6 +57,21 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Fetch unread articles only, for TTRSS"
+                },
+                "rss.status-bar-length": {
+                    "type": "number",
+                    "default": 20,
+                    "description": "Max length displayed in status bar"
+                },
+                "rss.status-bar-notify": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether show notification in status bar"
+                },
+                "rss.status-bar-update": {
+                    "type": "number",
+                    "default": 5,
+                    "description": "Notification update interval(s)"
                 }
             }
         },
@@ -89,6 +104,10 @@
             {
                 "command": "rss.read",
                 "title": "Read"
+            },
+            {
+                "command": "rss.read-notification",
+                "title": "Read from notification"
             },
             {
                 "command": "rss.refresh",
