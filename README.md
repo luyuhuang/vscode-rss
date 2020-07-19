@@ -18,6 +18,7 @@ VSCode-RSS is a Visual Studio Code extension that provides an embedded RSS reade
 - [x] Support multiple RSS formats;
 - [x] Automatic update;
 - [x] Support favorites;
+- [x] Scrolling notification;
 - [x] Read / unread marks;
 
 ## Usage
@@ -43,5 +44,8 @@ You can modify the configuration as needed.
 | `rss.timeout` | `integer` | Request timeout (s) |
 | `rss.retry` | `integer` | Request retries |
 | `rss.fetch-unread-only` | `boolean` | Whether to fetch unread articles only, for TTRSS |
+| `rss.status-bar-notify` | `boolean` | Whether to show scrolling notification in status bar |
+| `rss.status-bar-update` | `integer` | Scrolling notification update interval(s) |
+| `rss.status-bar-length` | `integer` | Max length of notification displayed in status bar |
 
 Enjoy it!

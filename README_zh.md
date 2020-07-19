@@ -18,6 +18,7 @@ VSCode-RSS 是一个 Visual Studio Code 扩展, 它提供了一个嵌入式的 R
 - [x] 支持多种 RSS 格式;
 - [x] 自动更新;
 - [x] 支持收藏夹;
+- [x] 滚动通知;
 - [x] 阅读标记;
 
 ## 使用
@@ -43,5 +44,8 @@ VSCode-RSS 支持两种类型的账户, 本地账户和 ttrss(Tiny Tiny RSS) 账
 | `rss.timeout` | `integer` | 请求超时时间 (秒) |
 | `rss.retry` | `integer` | 请求重试次数 |
 | `rss.fetch-unread-only` | `boolean` | 对于 TTRSS, 是否仅获取未读文章 |
+| `rss.status-bar-notify` | `boolean` | 是否在状态栏显示滚动通知 |
+| `rss.status-bar-update` | `integer` | 滚动通知刷新间隔 (秒) |
+| `rss.status-bar-length` | `integer` | 状态栏中显示的通知的最大长度 |
 
 Enjoy it!

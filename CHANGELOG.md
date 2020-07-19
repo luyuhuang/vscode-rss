@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.7.0 (2020-07-19)
+
+- Use id instead of link as primary key(close #7)
+- Add status bar scroll notification(close #11)
+
 ## v0.6.1 (2020-06-21)
 
 - Deal with links with CDATA(close #6)
