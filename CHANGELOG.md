@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.7.1 (2020-07-20)
+
+- Use `sha256(link + id)` as primary key to resolve key conflicts
+
 ## v0.7.0 (2020-07-19)
 
 - Use id instead of link as primary key(close #7)
