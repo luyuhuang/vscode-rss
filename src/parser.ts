@@ -3,8 +3,13 @@ import * as he from 'he';
 import * as cheerio from 'cheerio';
 import * as iconv from 'iconv-lite';
 import { URL } from "url";
-import { isString, isArray } from "util";
+import { isString, isArray, isNumber } from "util";
 import { Entry, Summary } from "./content";
+import * as crypto from 'crypto';
+
+function isStringified(s: any) {
+    return isString(s) || isNumber(s);
+}
 
 function order(attr: any) {
     if (!attr) {
@@ -25,14 +30,14 @@ function parseLink(link: any) {
     }
 
     let ans;
-    if (isString(link)) {
+    if (isStringified(link)) {
         ans = link;
-    } else if (isString(link.__attr?.href)) {
+    } else if (isStringified(link.__attr?.href)) {
         ans = link.__attr.href;
-    } else if (isString(link.__text)) {
+    } else if (isStringified(link.__text)) {
         ans = link.__text;
     } else if ('__cdata' in link) {
-        if (isString(link.__cdata)) {
+        if (isStringified(link.__cdata)) {
             ans = link.__cdata;
         } else if(isArray(link.__cdata)) {
             ans = link.__cdata.join('');
@@ -42,7 +47,7 @@ function parseLink(link: any) {
 }
 
 function dom2html(name: string, node: any) {
-    if (isString(node)) {
+    if (isStringified(node)) {
         return `<${name}>${node}</${name}>`;
     }
 
@@ -55,7 +60,7 @@ function dom2html(name: string, node: any) {
     }
     html += '>';
 
-    if (isString(node.__text)) {
+    if (isStringified(node.__text)) {
         html += node.__text;
     }
     for (const key in node) {
@@ -75,12 +80,12 @@ function dom2html(name: string, node: any) {
 
 function extractText(content: any) {
     let ans;
-    if (isString(content)) {
+    if (isStringified(content)) {
         ans = content;
-    } else if (isString(content.__text)) {
+    } else if (isStringified(content.__text)) {
         ans = content.__text;
     } else if ('__cdata' in content) {
-        if (isString(content.__cdata)) {
+        if (isStringified(content.__cdata)) {
             ans = content.__cdata;
         } else if(isArray(content.__cdata)) {
             ans = content.__cdata.join('');
@@ -99,7 +104,7 @@ function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | un
     } else if (dom.source) {
         link = dom.source;
     }
-    if (isString(link)) {
+    if (isStringified(link)) {
         link = new URL(link, baseURL).href;
     } else {
         link = undefined;
@@ -113,9 +118,10 @@ function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | un
     } else {
         id = link;
     }
-    if (!isString(id)) {
+    if (!isStringified(id)) {
         throw new Error("Feed Format Error: Entry Missing ID");
     }
+    id = crypto.createHash("sha256").update(baseURL + id).digest('hex');
 
     if (exclude.has(id)) {
         return undefined;
@@ -125,7 +131,7 @@ function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | un
     if ('title' in dom) {
         title = extractText(dom.title);
     }
-    if (!isString(title)) {
+    if (!isStringified(title)) {
         throw new Error("Feed Format Error: Entry Missing Title");
     }
     title = he.decode(title);
@@ -142,7 +148,7 @@ function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | un
     } else {
         content = title;
     }
-    if (!isString(content)) {
+    if (!isStringified(content)) {
         throw new Error("Feed Format Error: Entry Missing Content");
     }
     content = he.decode(content);
@@ -175,7 +181,7 @@ function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | un
     } else if (dom["dc:date"]) {
         date = dom["dc:date"];
     }
-    if (!isString(date)) {
+    if (!isStringified(date)) {
         throw new Error("Feed Format Error: Entry Missing Date");
     }
     date = new Date(date).getTime();
@@ -222,7 +228,7 @@ export function parseXML(xml: string, exclude: Set<string>): [Entry[], Summary] 
     } else if (feed.channel?.title !== undefined) {
         title = extractText(feed.channel.title);
     }
-    if (!isString(title)) {
+    if (!isStringified(title)) {
         throw new Error('Feed Format Error: Missing Title');
     }
     title = he.decode(title);
@@ -233,7 +239,7 @@ export function parseXML(xml: string, exclude: Set<string>): [Entry[], Summary] 
     } else if (feed.channel?.link) {
         link = parseLink(feed.channel.link);
     }
-    if (!isString(link)) {
+    if (!isStringified(link)) {
         throw new Error('Feed Format Error: Missing Link');
     }
     if (!link.match(/^https?:\/\//)) {

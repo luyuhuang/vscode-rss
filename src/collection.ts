@@ -99,7 +99,7 @@ export abstract class Collection {
     }
 
     async getContent(id: string) {
-        const file = pathJoin(this.dir, 'articles', encodeURIComponent(id));
+        const file = pathJoin(this.dir, 'articles', id.toString());
         try {
             return await readFile(file);
         } catch (error) {
@@ -133,7 +133,7 @@ export abstract class Collection {
     }
 
     async updateContent(id: string, content: string | undefined) {
-        const file = pathJoin(this.dir, 'articles', encodeURIComponent(id));
+        const file = pathJoin(this.dir, 'articles', id.toString());
         if (content === undefined) {
             await removeFile(file);
         } else {
@@ -568,7 +568,7 @@ export class TTRSSCollection extends Collection {
     }
 
     async getContent(id: string) {
-        if (!await fileExists(pathJoin(this.dir, 'articles', encodeURIComponent(id)))) {
+        if (!await fileExists(pathJoin(this.dir, 'articles', id.toString()))) {
             return await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
                 title: "Fetching content...",
