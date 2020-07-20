@@ -1,6 +1,11 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as parser from '../../parser';
+import * as crypto from 'crypto';
+
+function sha256(s: string) {
+    return crypto.createHash('sha256').update(s).digest('hex');
+}
 
 suite('test parser', () => {
     test('basic', () => {
@@ -150,7 +155,7 @@ suite('test parser', () => {
         assert.equal(entries.length, 1);
         assert.equal(entries[0].title, 'Title 1');
         assert.equal(entries[0].link, 'http://world.huanqiu.com/exclusive/2020-06/16558145.html');
-        assert.equal(entries[0].id, '41d2104c-3453-42d9-9aff-7c3447913a42');
+        assert.equal(entries[0].id, sha256('http://world.huanqiu.com41d2104c-3453-42d9-9aff-7c3447913a42'));
         assert.equal(entries[0].content, '<html><head></head><body>Content 1</body></html>');
     });
 
@@ -175,7 +180,7 @@ suite('test parser', () => {
         assert.equal(entries.length, 1);
         assert.equal(entries[0].title, 'Title 1');
         assert.equal(entries[0].link, 'http://world.huanqiu.com/exclusive/2020-06/16558145.html');
-        assert.equal(entries[0].id, 'http://world.huanqiu.com/exclusive/2020-06/16558145.html');
+        assert.equal(entries[0].id, sha256('http://world.huanqiu.comhttp://world.huanqiu.com/exclusive/2020-06/16558145.html'));
         assert.equal(entries[0].content, '<html><head></head><body>Content 1</body></html>');
     });
 });

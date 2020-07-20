@@ -24,7 +24,7 @@ jobs:
         node-version: 12.x
     - run: npm install
     - name: Run tests
-      uses: GabrielBB/xvfb-action@v1.2
+      uses: GabrielBB/xvfb-action@v1.0
       with:
         run: npm test
 
