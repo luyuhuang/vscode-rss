@@ -182,9 +182,10 @@ function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | un
         date = dom["dc:date"];
     }
     if (!isStringified(date)) {
-        throw new Error("Feed Format Error: Entry Missing Date");
+        date = new Date().getTime();
+    } else {
+        date = new Date(date).getTime();
     }
-    date = new Date(date).getTime();
     if (isNaN(date)) {
         throw new Error("Feed Format Error: Invalid Date");
     }
