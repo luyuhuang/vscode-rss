@@ -183,4 +183,61 @@ suite('test parser', () => {
         assert.equal(entries[0].id, sha256('http://world.huanqiu.comhttp://world.huanqiu.com/exclusive/2020-06/16558145.html'));
         assert.equal(entries[0].content, '<html><head></head><body>Content 1</body></html>');
     });
+
+    test('atom date', () => {
+        const xml = `
+        <?xml version="1.0" encoding="utf-8"?>
+        <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+        <link href="https://luyuhuang.tech/"/>
+        <id>https://luyuhuang.tech/feed.xml</id>
+        <title type="html">Luyu Huang's Tech Blog</title>
+        <entry>
+        <title type="html">Title 1</title>
+        <link href="https://luyuhuang.tech/2020/06/03/cloudflare-free-https.html"/>
+        <published>2020-06-03T00:00:00+08:00</published>
+        <content type="html">Some Content</content>
+        </entry>
+        </feed>
+        `;
+        const [entries, summary] = parser.parseXML(xml, new Set());
+        assert.equal(entries[0].date, new Date('2020-06-03T00:00:00+08:00').getTime());
+
+    });
+
+    test('rss2 date', () => {
+        const xml = `
+        <rss version="2.0">
+        <channel>
+        <title>Site Title</title>
+        <link>http://world.huanqiu.com</link>
+        <item>
+        <title><![CDATA[Title 1]]></title>
+        <link><![CDATA[http://world.huanqiu.com/exclusive/2020-06/16558145.html]]></link>
+        <description><![CDATA[Description 1]]></description>
+        <content><![CDATA[Content 1]]></content>
+        <pubDate>2020-06-18</pubDate>
+        </item>
+        </channel>
+        `;
+        const [entries, summary] = parser.parseXML(xml, new Set());
+        assert.equal(entries[0].date, new Date('2020-06-18').getTime());
+    });
+
+    test('missing date', () => {
+        const xml = `
+        <rss version="2.0">
+        <channel>
+        <title>Site Title</title>
+        <link>http://world.huanqiu.com</link>
+        <item>
+        <title><![CDATA[Title 1]]></title>
+        <link><![CDATA[http://world.huanqiu.com/exclusive/2020-06/16558145.html]]></link>
+        <description><![CDATA[Description 1]]></description>
+        <content><![CDATA[Content 1]]></content>
+        </item>
+        </channel>
+        `;
+        const [entries, summary] = parser.parseXML(xml, new Set());
+        assert(new Date().getTime() - entries[0].date < 10);
+    });
 });
