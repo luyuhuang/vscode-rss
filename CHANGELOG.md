@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.7.2 (2020-08-04)
+
+- Compatible with feeds with missing dates(close #15)
+- Hide commands from command palette
+
 ## v0.7.1 (2020-07-20)
 
 - Use `sha256(link + id)` as primary key to resolve key conflicts
