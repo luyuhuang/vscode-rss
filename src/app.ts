@@ -172,10 +172,10 @@ export class App {
             ['rss.select', this.rss_select],
             ['rss.articles', this.rss_articles],
             ['rss.read', this.rss_read],
-            ['rss.set-read', this.rss_set_read],
-            ['rss.set-unread', this.rss_set_unread],
-            ['rss.set-all-read', this.rss_set_all_read],
-            ['rss.set-account-read', this.rss_set_account_read],
+            ['rss.mark-read', this.rss_mark_read],
+            ['rss.mark-unread', this.rss_mark_unread],
+            ['rss.mark-all-read', this.rss_mark_all_read],
+            ['rss.mark-account-read', this.rss_mark_account_read],
             ['rss.refresh', this.rss_refresh],
             ['rss.refresh-account', this.rss_refresh_account],
             ['rss.refresh-one', this.rss_refresh_one],
@@ -293,7 +293,7 @@ export class App {
         await this.currCollection().updateAbstract(abstract.id, abstract).commit();
     }
 
-    async rss_set_read(article: Article) {
+    async rss_mark_read(article: Article) {
         const abstract = article.abstract;
         abstract.read = true;
         this.refreshLists();
@@ -301,7 +301,7 @@ export class App {
         await this.currCollection().updateAbstract(abstract.id, abstract).commit();
     }
 
-    async rss_set_unread(article: Article) {
+    async rss_mark_unread(article: Article) {
         const abstract = article.abstract;
         abstract.read = false;
         this.refreshLists();
@@ -309,7 +309,7 @@ export class App {
         await this.currCollection().updateAbstract(abstract.id, abstract).commit();
     }
 
-    async rss_set_all_read(feed?: Feed) {
+    async rss_mark_all_read(feed?: Feed) {
         let abstracts: Abstract[];
         if (feed) {
             abstracts = this.currCollection().getArticles(feed.feed);
@@ -325,7 +325,7 @@ export class App {
         await this.currCollection().commit();
     }
 
-    async rss_set_account_read(account?: Account) {
+    async rss_mark_account_read(account?: Account) {
         const collection = account ?
             this.collections[account.key] : this.currCollection();
         for (const abstract of collection.getArticles('<unread>')) {

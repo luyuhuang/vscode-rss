@@ -133,21 +133,21 @@
                 "title": "Open link"
             },
             {
-                "command": "rss.set-read",
-                "title": "Set as read"
+                "command": "rss.mark-read",
+                "title": "Mark as read"
             },
             {
-                "command": "rss.set-unread",
-                "title": "Set as unread"
+                "command": "rss.mark-unread",
+                "title": "Mark as unread"
             },
             {
-                "command": "rss.set-all-read",
-                "title": "Set all to read",
+                "command": "rss.mark-all-read",
+                "title": "Mark all as read",
                 "icon": "$(check)"
             },
             {
-                "command": "rss.set-account-read",
-                "title": "Set all to read",
+                "command": "rss.mark-account-read",
+                "title": "Mark all as read",
                 "icon": "$(check)"
             },
             {
@@ -198,6 +198,28 @@
             ]
         },
         "menus": {
+            "commandPalette": [
+                {"command": "rss.select", "when": "false"},
+                {"command": "rss.articles", "when": "false"},
+                {"command": "rss.read", "when": "false"},
+                {"command": "rss.mark-read", "when": "false"},
+                {"command": "rss.mark-unread", "when": "false"},
+                {"command": "rss.mark-all-read", "when": "false"},
+                {"command": "rss.mark-account-read", "when": "false"},
+                {"command": "rss.refresh", "when": "false"},
+                {"command": "rss.refresh-account", "when": "false"},
+                {"command": "rss.refresh-one", "when": "false"},
+                {"command": "rss.open-website", "when": "false"},
+                {"command": "rss.open-link", "when": "false"},
+                {"command": "rss.add-feed", "when": "false"},
+                {"command": "rss.remove-feed", "when": "false"},
+                {"command": "rss.add-to-favorites", "when": "false"},
+                {"command": "rss.remove-from-favorites", "when": "false"},
+                {"command": "rss.new-account", "when": "false"},
+                {"command": "rss.del-account", "when": "false"},
+                {"command": "rss.account-rename", "when": "false"},
+                {"command": "rss.account-modify", "when": "false"}
+            ],
             "view/title": [
                 {
                     "command": "rss.refresh",
@@ -220,7 +242,7 @@
                     "group": "navigation"
                 },
                 {
-                    "command": "rss.set-account-read",
+                    "command": "rss.mark-account-read",
                     "when": "view == rss-feeds",
                     "group": "navigation"
                 },
@@ -230,7 +252,7 @@
                     "group": "navigation"
                 },
                 {
-                    "command": "rss.set-all-read",
+                    "command": "rss.mark-all-read",
                     "when": "view == rss-articles",
                     "group": "navigation"
                 }
@@ -242,7 +264,7 @@
                     "group": "navigation@1"
                 },
                 {
-                    "command": "rss.set-account-read",
+                    "command": "rss.mark-account-read",
                     "when": "view == rss-accounts",
                     "group": "navigation@2"
                 },
@@ -266,11 +288,11 @@
                     "when": "viewItem == article"
                 },
                 {
-                    "command": "rss.set-read",
+                    "command": "rss.mark-read",
                     "when": "view == rss-articles"
                 },
                 {
-                    "command": "rss.set-unread",
+                    "command": "rss.mark-unread",
                     "when": "view == rss-articles"
                 },
                 {
@@ -282,7 +304,7 @@
                     "when": "view == rss-favorites && viewItem == article"
                 },
                 {
-                    "command": "rss.set-all-read",
+                    "command": "rss.mark-all-read",
                     "when": "viewItem == feed"
                 },
                 {
