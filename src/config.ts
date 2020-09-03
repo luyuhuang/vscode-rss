@@ -20,3 +20,8 @@ interface TTRSSAccount extends Account {
     username: string;
     password: string;
 }
+
+interface InoreaderAccount extends Account {
+    appid: string;
+    appkey: string;
+}

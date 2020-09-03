@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
-import * as collection from './collection';
+import { Collection } from './collection';
+import { LocalCollection } from './local_collection';
+import { TTRSSCollection } from './ttrss_collection';
 import { join as pathJoin } from 'path';
 import { checkDir, TTRSSApiURL } from './utils';
 import { AccountList, Account } from './account';
@@ -9,6 +11,7 @@ import { FavoritesList, Item } from './favorites';
 import { Abstract } from './content';
 import * as uuid from 'uuid';
 import { StatusBar } from './status_bar';
+import { InoreaderCollection } from './inoreader_collection';
 
 export class App {
     private static _instance?: App;
@@ -24,7 +27,7 @@ export class App {
 
     private status_bar = new StatusBar();
 
-    public collections: {[key: string]:collection.Collection} = {};
+    public collections: {[key: string]: Collection} = {};
     public readonly root: string = this.context.globalStoragePath;
 
     private constructor(
@@ -43,13 +46,16 @@ export class App {
             }
             const account = App.cfg.accounts[key];
             const dir = pathJoin(this.root, key);
-            let c: collection.Collection;
+            let c: Collection;
             switch (account.type) {
                 case 'local':
-                    c = new collection.LocalCollection(dir, key);
+                    c = new LocalCollection(dir, key);
                     break;
                 case 'ttrss':
-                    c = new collection.TTRSSCollection(dir, key);
+                    c = new TTRSSCollection(dir, key);
+                    break;
+                case 'inoreader':
+                    c = new InoreaderCollection(dir, key);
                     break;
                 default:
                     throw new Error(`Unknown account type: ${account.type}`);
@@ -85,6 +91,16 @@ export class App {
             server,
             username,
             password,
+        };
+        await App.cfg.update('accounts', accounts, true);
+    }
+
+    private async createInoreaderAccount(name: string, appid: string, appkey: string) {
+        const accounts = App.cfg.get<any>('accounts');
+        accounts[uuid.v1()] = {
+            name: name,
+            type: 'inoreader',
+            appid, appkey,
         };
         await App.cfg.update('accounts', accounts, true);
     }
@@ -421,10 +437,14 @@ export class App {
     }
 
     async rss_new_account() {
-        const type = await vscode.window.showQuickPick(['local', 'ttrss'], {placeHolder: "Select account type"});
+        const type = await vscode.window.showQuickPick(
+            ['local', 'ttrss', 'inoreader'],
+            {placeHolder: "Select account type"}
+        );
         if (type === undefined) {return;}
         const name = await vscode.window.showInputBox({prompt: 'Enter account name'});
         if (name === undefined || name.length <= 0) {return;}
+
         if (type === 'local') {
             await this.createLocalAccount(name);
         } else if (type === 'ttrss') {
@@ -435,6 +455,23 @@ export class App {
             const password = await vscode.window.showInputBox({prompt: 'Enter password', password: true});
             if (password === undefined || password.length <= 0) {return;}
             await this.createTTRSSAccount(name, TTRSSApiURL(url), username, password);
+        } else if (type === 'inoreader') {
+            const custom = await vscode.window.showQuickPick(
+                ['no', 'yes'],
+                {placeHolder: "Using custom app ID & app key?"}
+            );
+            let appid, appkey;
+            if (custom === 'yes') {
+                appid = await vscode.window.showInputBox({prompt: 'Enter app ID'});
+                if (!appid) {return;}
+                appkey = await vscode.window.showInputBox({prompt: 'Enter app key', password: true});
+                if (!appkey) {return;}
+            } else {
+                appid = '999999367';
+                appkey = 'GOgPzs1RnPTok6q8kC8HgmUPji3DjspC';
+            }
+
+            await this.createInoreaderAccount(name, appid, appkey);
         }
     }
 
@@ -476,8 +513,23 @@ export class App {
             cfg.server = TTRSSApiURL(url);
             cfg.username = username;
             cfg.password = password;
-            await App.cfg.update('accounts', accounts, true);
+        } else if (account.type === 'inoreader') {
+            const cfg = accounts[account.key] as InoreaderAccount;
+
+            const appid = await vscode.window.showInputBox({
+                prompt: 'Enter app ID', value: cfg.appid
+            });
+            if (!appid) {return;}
+            const appkey = await vscode.window.showInputBox({
+                prompt: 'Enter app key', password: true, value: cfg.appkey
+            });
+            if (!appkey) {return;}
+
+            cfg.appid = appid;
+            cfg.appkey = appkey;
         }
+
+        await App.cfg.update('accounts', accounts, true);
     }
 
     initEvents() {
@@ -485,22 +537,28 @@ export class App {
         let timer = setInterval(do_refresh, App.cfg.interval * 1000);
 
         const disposable = vscode.workspace.onDidChangeConfiguration(async (e) => {
-            if (this.updating) {
-                return;
+            if (e.affectsConfiguration('rss.interval')) {
+                clearInterval(timer);
+                timer = setInterval(do_refresh, App.cfg.interval * 1000);
             }
-            this.updating = true;
-            clearInterval(timer);
-            timer = setInterval(do_refresh, App.cfg.interval * 1000);
-            await vscode.window.withProgress({
-                location: vscode.ProgressLocation.Notification,
-                title: "Updating RSS...",
-                cancellable: false
-            }, async () => {
-                await this.initAccounts();
-                await Promise.all(Object.values(this.collections).map(c => c.fetchAll(false)));
-                this.refreshLists();
-                this.updating = false;
-            });
+
+            if (e.affectsConfiguration('rss.status-bar-notify') || e.affectsConfiguration('rss.status-bar-update')) {
+                this.refreshLists(App.STATUS_BAR);
+            }
+
+            if (e.affectsConfiguration('rss.accounts') && !this.updating) {
+                this.updating = true;
+                await vscode.window.withProgress({
+                    location: vscode.ProgressLocation.Notification,
+                    title: "Updating RSS...",
+                    cancellable: false
+                }, async () => {
+                    await this.initAccounts();
+                    await Promise.all(Object.values(this.collections).map(c => c.fetchAll(false)));
+                    this.refreshLists();
+                    this.updating = false;
+                });
+            }
         });
         this.context.subscriptions.push(disposable);
     }
