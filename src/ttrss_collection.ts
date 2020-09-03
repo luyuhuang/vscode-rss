@@ -163,44 +163,40 @@ export class TTRSSCollection extends Collection {
 
     async addToFavorites(id: string) {
         const abstract = this.getAbstract(id);
-        if (abstract) {
-            await vscode.window.withProgress({
-                location: vscode.ProgressLocation.Notification,
-                title: "Syncing...",
-                cancellable: false
-            }, async () => {
-                await this.request({
-                    op: "updateArticle",
-                    article_ids: `${abstract.custom_data}`,
-                    field: 0,
-                    mode: 1,
-                });
-                abstract.starred = true;
-                this.updateAbstract(id, abstract);
-                await this.commit();
-            });
+        if (!abstract) {
+            return;
         }
+        abstract.starred = true;
+        this.updateAbstract(id, abstract);
+        await this.commit();
+
+        this.request({
+            op: "updateArticle",
+            article_ids: `${abstract.custom_data}`,
+            field: 0,
+            mode: 1,
+        }).catch(error => {
+            vscode.window.showErrorMessage('Add favorite failed: ' + error.toString());
+        });
     }
 
     async removeFromFavorites(id: string) {
         const abstract = this.getAbstract(id);
-        if (abstract) {
-            await vscode.window.withProgress({
-                location: vscode.ProgressLocation.Notification,
-                title: "Syncing...",
-                cancellable: false
-            }, async () => {
-                await this.request({
-                    op: "updateArticle",
-                    article_ids: `${abstract.custom_data}`,
-                    field: 0,
-                    mode: 0,
-                });
-                abstract.starred = false;
-                this.updateAbstract(id, abstract);
-                await this.commit();
-            });
+        if (!abstract) {
+            return;
         }
+        abstract.starred = false;
+        this.updateAbstract(id, abstract);
+        await this.commit();
+
+        this.request({
+            op: "updateArticle",
+            article_ids: `${abstract.custom_data}`,
+            field: 0,
+            mode: 0,
+        }).catch(error => {
+            vscode.window.showErrorMessage('Remove favorite failed: ' + error.toString());
+        });
     }
 
     private async fetch(url: string, update: boolean) {
@@ -381,12 +377,12 @@ export class TTRSSCollection extends Collection {
             }
         }
         this.dirty_abstracts.clear();
-        try {
-            await this.syncReadStatus(read_list, true);
-            await this.syncReadStatus(unread_list, false);
-        } catch (error) {
+        Promise.all([
+            this.syncReadStatus(read_list, true),
+            this.syncReadStatus(unread_list, false),
+        ]).catch(error => {
             vscode.window.showErrorMessage('Sync read status failed: ' + error.toString());
-        }
+        });
 
         await writeFile(pathJoin(this.dir, 'feed_list'), JSON.stringify(this.feed_tree));
         await super.commit();
