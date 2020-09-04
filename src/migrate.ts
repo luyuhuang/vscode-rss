@@ -20,7 +20,7 @@ export async function migrate(context: vscode.ExtensionContext) {
 const VERSIONS = [
     '0.0.1', '0.0.2', '0.0.3', '0.0.4', '0.0.5', '0.1.0', '0.2.0', '0.2.1',
     '0.2.2', '0.3.0', '0.3.1', '0.4.0', '0.4.1', '0.5.0', '0.6.0', '0.6.1',
-    '0.7.0', '0.7.1', '0.7.2',
+    '0.7.0', '0.7.1', '0.7.2', '0.8.0',
 ];
 
 const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} = {

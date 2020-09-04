@@ -4,7 +4,7 @@
     "description": "A RSS reader embedded in Visual Studio Code",
     "license": "MIT",
     "icon": "logo.png",
-    "version": "0.7.2",
+    "version": "0.8.0",
     "publisher": "luyuhuang",
     "author": "luyuhuang",
     "homepage": "https://github.com/luyuhuang/vscode-rss.git",

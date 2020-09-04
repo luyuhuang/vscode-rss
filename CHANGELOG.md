@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.8.0 (2020-09-04)
+
+- **Support Inoreader**(close #14)
+-  Improve some user experience
+
 ## v0.7.2 (2020-08-04)
 
 - Compatible with feeds with missing dates(close #15)
