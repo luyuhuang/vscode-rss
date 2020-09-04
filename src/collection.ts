@@ -166,12 +166,6 @@ export abstract class Collection {
     }
 
     async clean() {
-        for (const feed in this.summaries) {
-            await this.removeSummary(feed);
-        }
-        await this.commit();
-        await removeDir(pathJoin(this.dir, 'feeds'));
-        await removeDir(pathJoin(this.dir, 'articles'));
         await removeDir(this.dir);
     }
 

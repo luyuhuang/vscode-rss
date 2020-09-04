@@ -73,21 +73,29 @@ export class InoreaderCollection extends Collection {
         const auth_code = await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: 'Authorizing...',
-            cancellable: false
-        }, async () => new Promise<string>((resolve, reject) => {
+            cancellable: true
+        }, async (_, token) => new Promise<string>((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject('Authorization Timeout');
+                server.close();
+            }, 300000);
+
+            token.onCancellationRequested(() => {
+                reject('Cancelled');
+                server.close();
+                clearInterval(timer);
+            });
+
             server.on('request', (req: IncomingMessage, res: ServerResponse) => {
                 const query = url_parse(req.url!, true).query;
                 if (query.code) {
                     resolve(query.code as string);
                     res.end('<h1>Authorization Succeeded</h1>');
                     server.close();
+                    clearInterval(timer);
                 }
             });
 
-            setTimeout(() => {
-                reject('Authorization Timeout');
-                server.close();
-            }, 60000);
         }));
 
         const res = await got({
@@ -100,10 +108,11 @@ export class InoreaderCollection extends Collection {
                 client_secret: this.cfg.appkey,
                 grant_type: 'authorization_code',
             },
+            throwHttpErrors: false,
         });
         const response = JSON.parse(res.body);
         if (!response.refresh_token || !response.access_token || !response.expires_in) {
-            throw Error('Get Token Fail');
+            throw Error('Get Token Fail: ' + response.error_description);
         }
         return {
             auth_code: auth_code,
@@ -122,7 +131,8 @@ export class InoreaderCollection extends Collection {
                 client_secret: this.cfg.appkey,
                 grant_type: "refresh_token",
                 refresh_token: token.refresh_token,
-            }
+            },
+            throwHttpErrors: false,
         });
         const response = JSON.parse(res.body);
         if (!response.refresh_token || !response.access_token || !response.expires_in) {
@@ -143,8 +153,8 @@ export class InoreaderCollection extends Collection {
             this.token = await this.refreshToken(this.token);
             if (!this.token) {
                 this.token = await this.authorize();
-                this.saveToken(this.token);
             }
+            this.saveToken(this.token);
         }
 
         return this.token.access_token;
@@ -288,7 +298,7 @@ export class InoreaderCollection extends Collection {
             const id = item.id.split('/').pop();
 
             const abs = new Abstract(id, he.decode(item.title), item.published * 1000,
-                                     item.origin.htmlUrl, read, url, starred);
+                                     item.canonical[0]?.href, read, url, starred);
             this.updateAbstract(id, abs);
             this.updateContent(id, item.summary.content);
             id2abs.set(id, abs);
@@ -378,12 +388,8 @@ export class InoreaderCollection extends Collection {
         if (list.length <= 0) {
             return;
         }
-        const param :{[key: string]: any} = {i: list};
-        if (read) {
-            param.a = 'user/-/state/com.google/read';
-        } else {
-            param.r = 'user/-/state/com.google/read';
-        }
+        const param = list.map(i => ['i', i]);
+        param.push([read ? 'a' : 'r', 'user/-/state/com.google/read']);
         await this.request('edit-tag', param, false);
     }
 
@@ -412,9 +418,4 @@ export class InoreaderCollection extends Collection {
         await super.commit();
     }
 
-    async clean() {
-        await removeFile(pathJoin(this.dir, 'feed_list'));
-        await removeFile(pathJoin(this.dir, 'auth_code'));
-        await super.clean();
-    }
 }

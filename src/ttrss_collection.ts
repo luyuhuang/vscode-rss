@@ -388,9 +388,4 @@ export class TTRSSCollection extends Collection {
         await super.commit();
     }
 
-    async clean() {
-        await super.clean();
-        await removeFile(pathJoin(this.dir, 'feed_list'));
-        await removeDir(this.dir);
-    }
 }

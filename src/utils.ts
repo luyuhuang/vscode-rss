@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as fse from 'fs-extra';
 
 export function checkDir(path: string) {
     return new Promise(resolve => fs.mkdir(path, resolve));
@@ -53,9 +54,7 @@ export function removeFile(path: string) {
 }
 
 export function removeDir(path: string) {
-    return new Promise(resolve => {
-        fs.rmdir(path, resolve);
-    });
+    return fse.remove(path);
 }
 
 export function fileExists(path: string): Promise<boolean> {
