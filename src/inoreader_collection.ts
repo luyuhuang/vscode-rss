@@ -274,12 +274,6 @@ export class InoreaderCollection extends Collection {
         }
 
         const id2abs = new Map<string, Abstract>();
-        for (const id of summary.catelog) {
-            const abs = this.getAbstract(id);
-            if (abs !== undefined) {
-                id2abs.set(id, abs);
-            }
-        }
 
         const res = await this.request(
             'stream/contents/' + encodeURIComponent(summary.custom_data),
@@ -302,6 +296,17 @@ export class InoreaderCollection extends Collection {
             this.updateAbstract(id, abs);
             this.updateContent(id, item.summary.content);
             id2abs.set(id, abs);
+        }
+
+        for (const id of summary.catelog) {
+            const abs = this.getAbstract(id);
+            if (abs !== undefined && !id2abs.has(id)) {
+                if (!abs.read) {
+                    abs.read = true;
+                    this.updateAbstract(id, abs);
+                }
+                id2abs.set(id, abs);
+            }
         }
 
         summary.catelog = [...id2abs.entries()]

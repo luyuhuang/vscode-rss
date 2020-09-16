@@ -228,6 +228,10 @@ export class TTRSSCollection extends Collection {
             if (!ids.has(id)) {
                 const abstract = this.getAbstract(id);
                 if (abstract) {
+                    if (!abstract.read) {
+                        abstract.read = true;
+                        this.updateAbstract(abstract.id, abstract);
+                    }
                     abstracts.push(abstract);
                 }
             }
