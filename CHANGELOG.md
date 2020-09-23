@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.8.1 (2020-09-24)
+
+- Fix the problem that unable sync read status when open fetch unread only
+
 ## v0.8.0 (2020-09-04)
 
 - **Support Inoreader**(close #14)
