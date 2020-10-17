@@ -3,15 +3,17 @@ import { Collection } from './collection';
 import { LocalCollection } from './local_collection';
 import { TTRSSCollection } from './ttrss_collection';
 import { join as pathJoin } from 'path';
-import { checkDir, TTRSSApiURL } from './utils';
+import { checkDir, readFile, TTRSSApiURL, walkFeedTree, writeFile } from './utils';
 import { AccountList, Account } from './account';
 import { FeedList, Feed } from './feeds';
 import { ArticleList, Article } from './articles';
 import { FavoritesList, Item } from './favorites';
-import { Abstract } from './content';
+import { Abstract, Summary } from './content';
 import * as uuid from 'uuid';
 import { StatusBar } from './status_bar';
 import { InoreaderCollection } from './inoreader_collection';
+import * as parser from "fast-xml-parser";
+import { assert } from 'console';
 
 export class App {
     private static _instance?: App;
@@ -205,6 +207,8 @@ export class App {
             ['rss.del-account', this.rss_del_account],
             ['rss.account-rename', this.rss_account_rename],
             ['rss.account-modify', this.rss_account_modify],
+            ['rss.export-to-opml', this.rss_export_to_opml],
+            ['rss.import-from-opml', this.rss_import_from_opml],
         ];
 
         for (const [cmd, handler] of commands) {
@@ -530,6 +534,66 @@ export class App {
         }
 
         await App.cfg.update('accounts', accounts, true);
+    }
+
+    async rss_export_to_opml(account: Account) {
+        const collection = this.collections[account.key];
+        const path = await vscode.window.showSaveDialog({
+            defaultUri: vscode.Uri.file(collection.name + '.opml')
+        });
+        if (!path) {
+            return;
+        }
+
+        const tree = collection.getFeedList();
+        const outlines: string[] = [];
+        for (const feed of walkFeedTree(tree)) {
+            const summary = collection.getSummary(feed);
+            if (!summary) {
+                continue;
+            }
+            outlines.push(`<outline text="${summary.title}" title="${summary.title}" type="rss" xmlUrl="${feed}" htmlUrl="${summary.link}"/>`);
+        }
+
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>`
+                  + `<opml version="1.0">`
+                  + `<head><title>${collection.name}</title></head>`
+                  + `<body>${outlines.join('')}</body>`
+                  + `</opml>`;
+
+        await writeFile(path.path, xml);
+    }
+
+    async rss_import_from_opml(account: Account) {
+        const collection = this.collections[account.key] as LocalCollection;
+        assert(collection.type === 'local');
+        const paths = await vscode.window.showOpenDialog({canSelectMany: false});
+        if (!paths) {
+            return;
+        }
+
+        const xml = await readFile(paths[0].path);
+        const dom = parser.parse(xml, {
+            attributeNamePrefix: "",
+            ignoreAttributes: false,
+            parseAttributeValue: true,
+        });
+        const outlines = dom.opml?.body?.outline;
+        if (!outlines) {
+            vscode.window.showErrorMessage("Bad OPML format");
+            return;
+        }
+        const feeds: string[] = [];
+        for (const outline of outlines) {
+            const feed = outline.xmlUrl;
+            if (!feed) {
+                vscode.window.showErrorMessage("Bad OPML format");
+                return;
+            }
+            feeds.push(feed as string);
+        }
+
+        await collection.addFeeds(feeds);
     }
 
     initEvents() {

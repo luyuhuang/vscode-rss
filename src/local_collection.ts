@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 import got from 'got';
 import { parseXML } from './parser';
-import { Entry, Summary, Abstract, Storage } from './content';
+import { Entry, Summary, Abstract } from './content';
 import { App } from './app';
 import { Collection } from './collection';
+import { walkFeedTree } from './utils';
 
 export class LocalCollection extends Collection {
     get type() {
@@ -44,6 +45,11 @@ export class LocalCollection extends Collection {
 
     async addFeed(feed: string) {
         await this.addToTree(this.cfg.feeds, feed);
+        await this.updateCfg();
+    }
+
+    async addFeeds(feeds: string[]) {
+        this.cfg.feeds.push(...feeds);
         await this.updateCfg();
     }
 
@@ -129,20 +135,8 @@ export class LocalCollection extends Collection {
         await this.commit();
     }
 
-    private *walkFeedTree(tree: FeedTree): Generator<string> {
-        for (const item of tree) {
-            if (typeof(item) === 'string') {
-                yield item;
-            } else {
-                for (const feed of this.walkFeedTree(item.list)) {
-                    yield feed;
-                }
-            }
-        }
-    }
-
     async fetchAll(update: boolean) {
-        const feeds = [...this.walkFeedTree(this.cfg.feeds)];
+        const feeds = [...walkFeedTree(this.cfg.feeds)];
         await Promise.all(feeds.map(feed => this.fetch(feed, update)));
         const feed_set = new Set(feeds);
         for (const feed of this.getFeeds()) {

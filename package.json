@@ -166,6 +166,14 @@
             {
                 "command": "rss.remove-from-favorites",
                 "title": "Remove from favorites"
+            },
+            {
+                "command": "rss.export-to-opml",
+                "title": "Export to OPML"
+            },
+            {
+                "command": "rss.import-from-opml",
+                "title": "Import from OPML"
             }
         ],
         "viewsContainers": {
@@ -278,6 +286,14 @@
                 {
                     "command": "rss.account-modify",
                     "when": "false"
+                },
+                {
+                    "command": "rss.export-to-opml",
+                    "when": "false"
+                },
+                {
+                    "command": "rss.import-from-opml",
+                    "when": "false"
                 }
             ],
             "view/title": [
@@ -339,9 +355,19 @@
                     "group": "navigation@4"
                 },
                 {
+                    "command": "rss.export-to-opml",
+                    "when": "view == rss-accounts && viewItem == local",
+                    "group": "navigation@5"
+                },
+                {
+                    "command": "rss.import-from-opml",
+                    "when": "view == rss-accounts && viewItem == local",
+                    "group": "navigation@6"
+                },
+                {
                     "command": "rss.del-account",
                     "when": "view == rss-accounts",
-                    "group": "navigation@5"
+                    "group": "navigation@7"
                 },
                 {
                     "command": "rss.open-link",

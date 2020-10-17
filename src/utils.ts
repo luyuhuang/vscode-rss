@@ -66,3 +66,15 @@ export function fileExists(path: string): Promise<boolean> {
 export function TTRSSApiURL(server_url: string) {
     return server_url.endsWith('/') ? server_url + 'api/' : server_url + '/api/';
 }
+
+export function *walkFeedTree(tree: FeedTree): Generator<string> {
+    for (const item of tree) {
+        if (typeof(item) === 'string') {
+            yield item;
+        } else {
+            for (const feed of walkFeedTree(item.list)) {
+                yield feed;
+            }
+        }
+    }
+}
