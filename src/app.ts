@@ -209,6 +209,8 @@ export class App {
             ['rss.account-modify', this.rss_account_modify],
             ['rss.export-to-opml', this.rss_export_to_opml],
             ['rss.import-from-opml', this.rss_import_from_opml],
+            ['rss.clean-old-articles', this.rss_clean_old_articles],
+            ['rss.clean-all-old-articles', this.rss_clean_all_old_articles],
         ];
 
         for (const [cmd, handler] of commands) {
@@ -594,6 +596,49 @@ export class App {
         }
 
         await collection.addFeeds(feeds);
+    }
+
+    private async selectExpire(): Promise<number|undefined> {
+        const s = ['1 month', '2 months', '3 months', '6 months'];
+        const t = [1 * 30, 2 * 30, 3 * 30, 6 * 30];
+        const time = await vscode.window.showQuickPick(s, {
+            placeHolder: "Choose a time. Unread and favorite articles will be kept."
+        });
+        if (!time) {
+            return undefined;
+        }
+        return t[s.indexOf(time)] * 86400 * 1000;
+    }
+
+    async rss_clean_old_articles(feed: Feed) {
+        const exprie = await this.selectExpire();
+        if (!exprie) {
+            return;
+        }
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: "Cleaning...",
+            cancellable: false
+        }, async () => {
+            await this.currCollection().cleanOldArticles(feed.feed, exprie);
+        });
+        this.refreshLists(App.ARTICLE | App.STATUS_BAR);
+    }
+
+    async rss_clean_all_old_articles(account: Account) {
+        const expire = await this.selectExpire();
+        if (!expire) {
+            return;
+        }
+        const collection = this.collections[account.key];
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: "Cleaning...",
+            cancellable: false
+        }, async () => {
+            await collection.cleanAllOldArticles(expire);
+        });
+        this.refreshLists(App.ARTICLE | App.STATUS_BAR);
     }
 
     initEvents() {

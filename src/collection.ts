@@ -85,6 +85,35 @@ export abstract class Collection {
         }
     }
 
+    async cleanAllOldArticles(expire: number) {
+        for (const feed in this.summaries) {
+            await this.cleanOldArticles(feed, expire);
+        }
+    }
+
+    async cleanOldArticles(feed: string, expire: number) {
+        const summary = this.getSummary(feed);
+        if (!summary) {
+            return;
+        }
+        this.dirty_summaries.add(feed);
+
+        const now = new Date().getTime();
+        for (let i = summary.catelog.length - 1; i >= 0; --i) {
+            const id = summary.catelog[i];
+            const abs = this.getAbstract(id);
+            if (abs && now - abs.date <= expire) { // remaining articles is not expired, break
+                break;
+            }
+            if (!abs || (abs.read && !abs.starred)) {
+                summary.catelog.splice(i, 1);
+                delete this.abstracts[id];
+                await removeFile(pathJoin(this.dir, 'articles', id.toString()));
+            }
+        }
+        await this.commit();
+    }
+
     getFavorites() {
         const list: Abstract[] = [];
         for (const abstract of Object.values(this.abstracts)) {

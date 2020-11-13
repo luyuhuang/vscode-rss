@@ -56,7 +56,7 @@
                 "rss.fetch-unread-only": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Fetch unread articles only, for TTRSS"
+                    "description": "Fetch unread articles only, for TTRSS and Inoreader"
                 },
                 "rss.status-bar-length": {
                     "type": "number",
@@ -174,6 +174,14 @@
             {
                 "command": "rss.import-from-opml",
                 "title": "Import from OPML"
+            },
+            {
+                "command": "rss.clean-old-articles",
+                "title": "Clean old articles"
+            },
+            {
+                "command": "rss.clean-all-old-articles",
+                "title": "Clean old articles"
             }
         ],
         "viewsContainers": {
@@ -294,6 +302,14 @@
                 {
                     "command": "rss.import-from-opml",
                     "when": "false"
+                },
+                {
+                    "command": "rss.clean-old-articles",
+                    "when": "false"
+                },
+                {
+                    "command": "rss.clean-all-old-articles",
+                    "when": "false"
                 }
             ],
             "view/title": [
@@ -365,9 +381,14 @@
                     "group": "navigation@6"
                 },
                 {
+                    "command": "rss.clean-all-old-articles",
+                    "when": "view == rss-accounts",
+                    "group": "navigation@8"
+                },
+                {
                     "command": "rss.del-account",
                     "when": "view == rss-accounts",
-                    "group": "navigation@7"
+                    "group": "navigation@9"
                 },
                 {
                     "command": "rss.open-link",
@@ -390,20 +411,29 @@
                     "when": "view == rss-favorites && viewItem == article"
                 },
                 {
-                    "command": "rss.mark-all-read",
-                    "when": "viewItem == feed"
+                    "command": "rss.refresh-one",
+                    "when": "viewItem == feed",
+                    "group": "navigation@1"
                 },
                 {
-                    "command": "rss.refresh-one",
-                    "when": "viewItem == feed"
+                    "command": "rss.mark-all-read",
+                    "when": "viewItem == feed",
+                    "group": "navigation@2"
                 },
                 {
                     "command": "rss.open-website",
-                    "when": "viewItem == feed"
+                    "when": "viewItem == feed",
+                    "group": "navigation@3"
+                },
+                {
+                    "command": "rss.clean-old-articles",
+                    "when": "viewItem == feed",
+                    "group": "navigation@4"
                 },
                 {
                     "command": "rss.remove-feed",
-                    "when": "viewItem == feed"
+                    "when": "viewItem == feed",
+                    "group": "navigation@5"
                 }
             ]
         }
