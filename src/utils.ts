@@ -30,15 +30,7 @@ export function readFile(path: string) {
 }
 
 export function moveFile(oldPath: string, newPath: string) {
-    return new Promise((resolve, reject)=> {
-        fs.rename(oldPath, newPath, (err) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve();
-            }
-        });
-    });
+    return fse.move(oldPath, newPath);
 }
 
 export function readDir(path: string) {
