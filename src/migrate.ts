@@ -12,7 +12,7 @@ export async function checkStoragePath(context: vscode.ExtensionContext): Promis
     const root = cfg.get<string>('storage-path') || context.globalStoragePath;
     if (old !== root) {
         if (!isAbsolute(root)) {
-            throw Error(`"${root}" is not a absolute path`);
+            throw Error(`"${root}" is not an absolute path`);
         }
         if (!await fileExists(root) || await isDirEmpty(root)) {
             await vscode.window.withProgress({

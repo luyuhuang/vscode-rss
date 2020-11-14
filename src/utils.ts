@@ -6,8 +6,14 @@ export function checkDir(path: string) {
 }
 
 export function writeFile(path: string, data: string) {
-    return new Promise(resolve => {
-        fs.writeFile(path, data, {encoding: 'utf-8'}, resolve);
+    return new Promise((resolve, reject) => {
+        fs.writeFile(path, data, {encoding: 'utf-8'}, err => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
     });
 }
 

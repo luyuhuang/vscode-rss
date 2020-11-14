@@ -31,7 +31,7 @@
     "main": "./out/extension.js",
     "contributes": {
         "configuration": {
-            "title": "rss",
+            "title": "RSS",
             "properties": {
                 "rss.accounts": {
                     "type": "object",

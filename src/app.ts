@@ -563,7 +563,7 @@ export class App {
                   + `<body>${outlines.join('')}</body>`
                   + `</opml>`;
 
-        await writeFile(path.path, xml);
+        await writeFile(path.fsPath, xml);
     }
 
     async rss_import_from_opml(account: Account) {
@@ -574,7 +574,7 @@ export class App {
             return;
         }
 
-        const xml = await readFile(paths[0].path);
+        const xml = await readFile(paths[0].fsPath);
         const dom = parser.parse(xml, {
             attributeNamePrefix: "",
             ignoreAttributes: false,
