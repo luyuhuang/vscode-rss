@@ -72,5 +72,6 @@ VSCode-RSS 支持三种类型的账户, 本地账户, TTRSS(Tiny Tiny RSS) 账�
 | `rss.status-bar-notify` | `boolean` | 是否在状态栏显示滚动通知 |
 | `rss.status-bar-update` | `integer` | 滚动通知刷新间隔 (秒) |
 | `rss.status-bar-length` | `integer` | 状态栏中显示的通知的最大长度 |
+| `rss.storage-path` | `string` | 数据存储路径, 必须是绝对路径 |
 
 Enjoy it!

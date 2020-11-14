@@ -72,5 +72,6 @@ You can modify the configuration as needed.
 | `rss.status-bar-notify` | `boolean` | Whether to show scrolling notification in status bar |
 | `rss.status-bar-update` | `integer` | Scrolling notification update interval(s) |
 | `rss.status-bar-length` | `integer` | Max length of notification displayed in status bar |
+| `rss.storage-path` | `string` | Data storage path, must be an absolute path |
 
 Enjoy it!

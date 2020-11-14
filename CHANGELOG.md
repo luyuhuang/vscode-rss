@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.9.0 (2020-11-14)
+
+- Export / import from OPML(close #22)
+- Clean old articles
+- Data storage path is configurable(close #20 close #21)
+
 ## v0.8.1 (2020-09-24)
 
 - Fix the problem that unable sync read status when open fetch unread only
