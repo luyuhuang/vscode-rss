@@ -72,6 +72,11 @@
                     "type": "number",
                     "default": 5,
                     "description": "Notification update interval(s)"
+                },
+                "rss.storage-path": {
+                    "type": "string",
+                    "default": null,
+                    "description": "Data storage path"
                 }
             }
         },

@@ -1,20 +1,75 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { join as pathJoin } from 'path';
+import { join as pathJoin, isAbsolute } from 'path';
 import { Summary, Entry, Abstract, Storage } from './content';
-import { writeFile, readDir, checkDir, moveFile, readFile, fileExists } from './utils';
+import { writeFile, readDir, checkDir, moveFile, readFile, fileExists, isDirEmpty } from './utils';
 import * as uuid from 'uuid';
 import * as crypto from 'crypto';
 
-export async function migrate(context: vscode.ExtensionContext) {
-    const old = context.globalState.get<string>('version', '0.0.1');
-    for (let i = VERSIONS.indexOf(old) + 1; i < VERSIONS.length; ++i) {
+export async function checkStoragePath(context: vscode.ExtensionContext): Promise<string> {
+    const old = context.globalState.get<string>('root', context.globalStoragePath);
+    const cfg = vscode.workspace.getConfiguration('rss');
+    const root = cfg.get<string>('storage-path') || context.globalStoragePath;
+    if (old !== root) {
+        if (!isAbsolute(root)) {
+            throw Error(`"${root}" is not a absolute path`);
+        }
+        if (!await fileExists(root) || await isDirEmpty(root)) {
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: 'Moving data...',
+                cancellable: false
+            }, async () => {
+                await checkDir(old);
+                try {
+                    await moveFile(old, root);
+                } catch (e) {
+                    throw Error(`Move data failed: ${e.toString()}`);
+                }
+            });
+        } else {
+            const s = await vscode.window.showInformationMessage(
+                `Target directory "${root}" is not empty, use this directory?`,
+                'Yes', "Cancel"
+            );
+            if (s !== 'Yes') {
+                // revert the configuration
+                await cfg.update('storage-path', old, true);
+                return old;
+            }
+        }
+        await context.globalState.update('root', root);
+    }
+    return root;
+}
+
+async function getVersion(ctx: vscode.ExtensionContext, root: string) {
+    const path = pathJoin(root, 'version');
+    if (!await fileExists(path)) {
+        // an issue left over from history
+        await setVersion(root, ctx.globalState.get<string>('version', '0.0.1'));
+    }
+    return (await readFile(path)).trim();
+}
+
+async function setVersion(root: string, version: string) {
+    await writeFile(pathJoin(root, 'version'), version);
+}
+
+export async function migrate(context: vscode.ExtensionContext, root: string) {
+    const old = await getVersion(context, root);
+    const idx = VERSIONS.indexOf(old);
+    if (idx < 0) {
+        throw Error(`Invalid version "${old}". Current version is "${VERSIONS[VERSIONS.length - 1]}"`);
+    }
+
+    for (let i = idx + 1; i < VERSIONS.length; ++i) {
         const v = VERSIONS[i];
         if (v in alter) {
-            await alter[v](context);
+            await alter[v](context, root);
         }
     }
-    await context.globalState.update('version', VERSIONS[VERSIONS.length - 1]);
+    await setVersion(root, VERSIONS[VERSIONS.length - 1]);
 }
 
 const VERSIONS = [
@@ -23,16 +78,15 @@ const VERSIONS = [
     '0.7.0', '0.7.1', '0.7.2', '0.8.0', '0.8.1',
 ];
 
-const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} = {
-    '0.3.1': async (context) => {
+const alter: {[v: string]: (context: vscode.ExtensionContext, root: string) => Promise<void>} = {
+    '0.3.1': async (context, root) => {
         await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: 'Migrating data for the new version...',
             cancellable: false
         }, async () => {
             const cfg = vscode.workspace.getConfiguration('rss');
-            const dir = context.globalStoragePath;
-            await checkDir(dir);
+            await checkDir(root);
             const summaries: {[url: string]: Summary} = {};
             const abstracts: {[link: string]: Abstract} = {};
 
@@ -42,7 +96,7 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
                 for (const link of summary.catelog) {
                     const entry = context.globalState.get<Entry>(link);
                     if (entry === undefined) { continue; }
-                    await writeFile(path.join(dir, encodeURIComponent(link)), entry.content);
+                    await writeFile(path.join(root, encodeURIComponent(link)), entry.content);
 
                     abstracts[link] = Abstract.fromEntry(entry, feed);
                     await context.globalState.update(link, undefined);
@@ -56,8 +110,7 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
         });
     },
 
-    '0.4.0': async (context) => {
-        const root = context.globalStoragePath;
+    '0.4.0': async (context, root) => {
         await checkDir(root);
 
         const cfg = vscode.workspace.getConfiguration('rss');
@@ -98,8 +151,7 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
         await context.globalState.update('abstracts', undefined);
     },
 
-    '0.7.0': async (context) => {
-        const root = context.globalStoragePath;
+    '0.7.0': async (context, root) => {
         await checkDir(root);
 
         const cfg = vscode.workspace.getConfiguration('rss');
@@ -129,8 +181,7 @@ const alter: {[v: string]: (context: vscode.ExtensionContext) => Promise<void>} 
         }
     },
 
-    '0.7.1': async (context) => {
-        const root = context.globalStoragePath;
+    '0.7.1': async (context, root) => {
         await checkDir(root);
 
         const cfg = vscode.workspace.getConfiguration('rss');

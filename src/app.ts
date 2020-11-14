@@ -30,10 +30,10 @@ export class App {
     private status_bar = new StatusBar();
 
     public collections: {[key: string]: Collection} = {};
-    public readonly root: string = this.context.globalStoragePath;
 
     private constructor(
-        public readonly context: vscode.ExtensionContext
+        public readonly context: vscode.ExtensionContext,
+        public readonly root: string,
     ) {}
 
     private async initAccounts() {
@@ -125,8 +125,8 @@ export class App {
         await this.initAccounts();
     }
 
-    static async initInstance(context: vscode.ExtensionContext) {
-        App._instance = new App(context);
+    static async initInstance(context: vscode.ExtensionContext, root: string) {
+        App._instance = new App(context, root);
         await App.instance.init();
     }
 
@@ -668,6 +668,14 @@ export class App {
                     this.updating = false;
                 });
             }
+
+            if (e.affectsConfiguration('rss.storage-path')) {
+                const res = await vscode.window.showInformationMessage("Reload vscode to take effect", "Reload");
+                if (res === "Reload") {
+                    vscode.commands.executeCommand("workbench.action.reloadWindow");
+                }
+            }
+
         });
         this.context.subscriptions.push(disposable);
     }

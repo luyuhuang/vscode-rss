@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
-import { migrate } from './migrate';
+import { checkStoragePath, migrate } from './migrate';
 import { App } from './app';
 
 export async function activate(context: vscode.ExtensionContext) {
-    await migrate(context);
-    await App.initInstance(context);
+    const root = await checkStoragePath(context);
+    await migrate(context, root);
+    await App.initInstance(context, root);
 
     App.instance.initViews();
     App.instance.initCommands();

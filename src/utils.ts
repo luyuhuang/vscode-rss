@@ -63,6 +63,18 @@ export function fileExists(path: string): Promise<boolean> {
     });
 }
 
+export function isDirEmpty(path: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        fs.readdir(path, (err, files) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(files.length === 0);
+            }
+        });
+    });
+}
+
 export function TTRSSApiURL(server_url: string) {
     return server_url.endsWith('/') ? server_url + 'api/' : server_url + '/api/';
 }
