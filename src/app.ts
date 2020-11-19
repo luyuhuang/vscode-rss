@@ -121,7 +121,6 @@ export class App {
     }
 
     async init() {
-        await checkDir(this.root);
         await this.initAccounts();
     }
 

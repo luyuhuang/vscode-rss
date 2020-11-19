@@ -35,11 +35,13 @@ export async function checkStoragePath(context: vscode.ExtensionContext): Promis
             if (s !== 'Yes') {
                 // revert the configuration
                 await cfg.update('storage-path', old, true);
+                await checkDir(old);
                 return old;
             }
         }
         await context.globalState.update('root', root);
     }
+    await checkDir(root);
     return root;
 }
 
