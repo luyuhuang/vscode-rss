@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.9.1 (2020-11-19)
+
+- fix activating extension error(#23)
+
 ## v0.9.0 (2020-11-14)
 
 - Export / import from OPML(close #22)
