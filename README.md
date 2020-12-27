@@ -13,7 +13,7 @@ A RSS reader embedded in Visual Studio Code
 
 ## Introduction
 
-VSCode-RSS is a Visual Studio Code extension that provides an embedded RSS reader. With it, you can read news and blog freely in VSCode after a long time of coding. [Tiny Tiny RSS](https://tt-rss.org/) and [Inoreader](https://inoreader.com) are supported, which allows you to sync RSS between devices. VSCode-RSS is easy to use and requires little to manually modify the configuration.
+VSCode-RSS is a Visual Studio Code extension that provides an embedded RSS reader. With it, you can read news and blog freely in VSCode after a long time of coding. [Tiny Tiny RSS](https://tt-rss.org/) and [Inoreader](https://innoreader.com) are supported, which allows you to sync RSS between devices. VSCode-RSS is easy to use and requires little to manually modify the configuration.
 
 - [x] Multiple accounts;
 - [x] Support Tiny Tiny RSS;
@@ -42,7 +42,7 @@ For TTRSS account, it will fetch data from Tiny Tiny RSS server and synchronize 
 
 #### Inoreader Account
 
-For Inoreader account, similar with TTRSS account, it'll fetch and synchronize data with the Inoreader server. If you don't know Inoreader, see [https://inoreader.com](https://inoreader.com) for more information. The simplest way to create an Inoreader account is to click the add account button and select "inoreader" option, enter the account name and select "no" (using default app ID and app key). Then, you'll be prompted to open the authorization page and you should follow the tips to authenticate your Inoreader account. If it goes well, the account will be created.
+For Inoreader account, similar with TTRSS account, it'll fetch and synchronize data with the Inoreader server. If you don't know Inoreader, see [https://innoreader.com](https://innoreader.com) for more information. The simplest way to create an Inoreader account is to click the add account button and select "inoreader" option, enter the account name and select "no" (using default app ID and app key). Then, you'll be prompted to open the authorization page and you should follow the tips to authenticate your Inoreader account. If it goes well, the account will be created.
 
 Because Inoreader has a limit on the number of requests for a single app, maybe you need to create and use your own app ID and app key. Open your Inoreader preferences page, click the "Developer" in "Other", and then click the "New application". Enter an arbitrary name and set the scope to "Read and write", then click "Save".
 

@@ -1,3 +1,10 @@
+<!--
+ * @Author: Ysx
+ * @Date: 2020-12-27 08:49:48
+ * @LastEditors: Ysx
+ * @LastEditTime: 2020-12-27 08:51:30
+ * @Description: file content
+-->
 # VSCode-RSS
 
 嵌入在 Visual Studio Code 中的 RSS 阅读器
@@ -13,7 +20,7 @@
 
 ## 介绍
 
-VSCode-RSS 是一个 Visual Studio Code 扩展, 它提供了一个嵌入式的 RSS 阅读器. 有了它你就可以在长时间写代码之后在 VScode 中自由地阅读新闻和博客. 支持 [Tiny Tiny RSS](https://tt-rss.org/) 和 [Inoreader](https://inoreader.com), 它们可以让你在不同的设备之间同步 RSS. VSCode-RSS 很容易使用, 基本不需要手动修改配置文件.
+VSCode-RSS 是一个 Visual Studio Code 扩展, 它提供了一个嵌入式的 RSS 阅读器. 有了它你就可以在长时间写代码之后在 VScode 中自由地阅读新闻和博客. 支持 [Tiny Tiny RSS](https://tt-rss.org/) 和 [Inoreader](https://innoreader.com), 它们可以让你在不同的设备之间同步 RSS. VSCode-RSS 很容易使用, 基本不需要手动修改配置文件.
 
 - [x] 多账户;
 - [x] 支持 Tiny Tiny RSS;
@@ -42,7 +49,7 @@ VSCode-RSS 支持三种类型的账户, 本地账户, TTRSS(Tiny Tiny RSS) 账�
 
 #### Inoreader 账户
 
-对于 Inoreader 账户, 类似于 TTRSS, 它会向 Inoreader 服务器获取和同步数据. 如果你不了解 Inoreader, 见 [https://inoreader.com](https://inoreader.com). 创建 Inoreader 账户最简单的方法就是点击创建账户按钮并选择 "inoreader", 接着输入账户名然后选择 "no" (使用默认的 app ID 和 app key). 然后, 它会提示你打开认证页面, 你只需根据提示认证你的账户即可. 一切顺利的话, 账户就创建好了.
+对于 Inoreader 账户, 类似于 TTRSS, 它会向 Inoreader 服务器获取和同步数据. 如果你不了解 Inoreader, 见 [https://innoreader.com](https://innoreader.com). 创建 Inoreader 账户最简单的方法就是点击创建账户按钮并选择 "inoreader", 接着输入账户名然后选择 "no" (使用默认的 app ID 和 app key). 然后, 它会提示你打开认证页面, 你只需根据提示认证你的账户即可. 一切顺利的话, 账户就创建好了.
 
 由于 Inoreader 对单个 app 的请求数量有限制, 因此你可能需要创建并使用你自己的 app ID 和 app key. 打开你的 Inoreader 偏好设置, 点击 "其它" 中的 "开发者", 然后点击 "新应用". 任意设置一个名称并将权限范围设置为 "可读写", 然后点击 "保存".
 

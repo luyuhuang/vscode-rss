@@ -67,7 +67,7 @@ export class InoreaderCollection extends Collection {
 
         const client_id = this.cfg.appid;
         const redirect_uri = encodeURIComponent(`http://127.0.0.1:${addr.port}`);
-        const url = `https://www.inoreader.com/oauth2/auth?client_id=${client_id}&redirect_uri=${redirect_uri}&response_type=code&scope=read+write&state=1`;
+        const url = `https://www.innoreader.com/oauth2/auth?client_id=${client_id}&redirect_uri=${redirect_uri}&response_type=code&scope=read+write&state=1`;
         await vscode.env.openExternal(vscode.Uri.parse(url));
 
         const auth_code = await vscode.window.withProgress({
@@ -99,7 +99,7 @@ export class InoreaderCollection extends Collection {
         }));
 
         const res = await got({
-            url: 'https://www.inoreader.com/oauth2/token',
+            url: 'https://www.innoreader.com/oauth2/token',
             method: 'POST',
             form: {
                 code: auth_code,
@@ -124,7 +124,7 @@ export class InoreaderCollection extends Collection {
 
     private async refreshToken(token: Token) {
         const res = await got({
-            url: 'https://www.inoreader.com/oauth2/token',
+            url: 'https://www.innoreader.com/oauth2/token',
             method: 'POST',
             form: {
                 client_id: this.cfg.appid,
@@ -164,7 +164,7 @@ export class InoreaderCollection extends Collection {
         const access_token = await this.getAccessToken();
 
         const res = await got({
-            url: `https://www.inoreader.com/reader/api/0/${cmd}`,
+            url: `https://www.innoreader.com/reader/api/0/${cmd}`,
             method: 'POST',
             headers: {'Authorization': `Bearer ${access_token}`},
             form: param,
