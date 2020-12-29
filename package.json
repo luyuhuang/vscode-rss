@@ -77,6 +77,11 @@
                     "type": "string",
                     "default": null,
                     "description": "Data storage path"
+                },
+                "rss.inoreader-domain": {
+                    "type": "string",
+                    "default": "www.inoreader.com",
+                    "description": "Domain of Inoreader"
                 }
             }
         },
