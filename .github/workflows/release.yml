@@ -1,0 +1,23 @@
+name: release
+
+on:
+  push:
+    tags:
+    - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Install Node
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12.x
+    - run: npm install
+    - run: npm install -g vsce
+    - name: Publish
+      run: vsce publish -p $VSCE_TOKEN
+      env:
+        VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
