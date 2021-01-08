@@ -40,10 +40,10 @@ export abstract class Collection {
     }
 
     abstract get type(): string;
-    abstract async addFeed(feed: string): Promise<void>;
-    abstract async delFeed(feed: string): Promise<void>;
-    abstract async addToFavorites(id: string): Promise<void>;
-    abstract async removeFromFavorites(id: string): Promise<void>;
+    abstract addFeed(feed: string): Promise<void>;
+    abstract delFeed(feed: string): Promise<void>;
+    abstract addToFavorites(id: string): Promise<void>;
+    abstract removeFromFavorites(id: string): Promise<void>;
 
     getSummary(url: string): Summary | undefined {
         return this.summaries[url];
@@ -198,7 +198,7 @@ export abstract class Collection {
         await removeDir(this.dir);
     }
 
-    abstract async fetchAll(update: boolean): Promise<void>;
-    abstract async fetchOne(url: string, update: boolean): Promise<void>;
+    abstract fetchAll(update: boolean): Promise<void>;
+    abstract fetchOne(url: string, update: boolean): Promise<void>;
 
 }

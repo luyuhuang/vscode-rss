@@ -7,6 +7,8 @@ import { Collection } from './collection';
 import { walkFeedTree } from './utils';
 
 export class LocalCollection extends Collection {
+    private etags = new Map<string, string>();
+
     get type() {
         return 'local';
     }
@@ -95,18 +97,23 @@ export class LocalCollection extends Collection {
             return;
         }
 
-        const abstracts: Abstract[] = [];
-        for (const id of summary.catelog) {
-            const abstract = this.getAbstract(id);
-            if (abstract !== undefined) {
-                abstracts.push(abstract);
-            }
-        }
-
         let entries: Entry[];
         try {
             const cfg = App.cfg;
-            const res = await got(url, {timeout: cfg.timeout * 1000, retry: cfg.retry, encoding: 'binary'});
+            const res = await got(url, {
+                timeout: cfg.timeout * 1000, retry: cfg.retry, encoding: 'binary',
+                headers: {'If-None-Match': this.etags.get(url)}
+            });
+            if (res.statusCode === 304) {
+                return;
+            }
+            let etag = res.headers['etag'];
+            if (etag) {
+                if (Array.isArray(etag)) {
+                    etag = etag[0];
+                }
+                this.etags.set(url, etag);
+            }
             const [e, s] = parseXML(res.body, new Set(summary.catelog));
             entries = e;
             summary.title = s.title;
@@ -116,6 +123,14 @@ export class LocalCollection extends Collection {
             vscode.window.showErrorMessage(error.toString());
             entries = [];
             summary.ok = false;
+        }
+
+        const abstracts: Abstract[] = [];
+        for (const id of summary.catelog) {
+            const abstract = this.getAbstract(id);
+            if (abstract !== undefined) {
+                abstracts.push(abstract);
+            }
         }
 
         for (const entry of entries) {
