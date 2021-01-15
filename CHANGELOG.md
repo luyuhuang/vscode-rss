@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.9.2 (2021-01-15)
+
+- Using Etag to improve update efficiency
+- The domain of Inoreader is configurable
+
 ## v0.9.1 (2020-11-19)
 
 - fix activating extension error(#23)
