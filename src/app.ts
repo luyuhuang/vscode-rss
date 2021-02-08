@@ -14,6 +14,7 @@ import { StatusBar } from './status_bar';
 import { InoreaderCollection } from './inoreader_collection';
 import * as parser from "fast-xml-parser";
 import { assert } from 'console';
+import { privateEncrypt } from 'crypto';
 
 export class App {
     private static _instance?: App;
@@ -579,22 +580,20 @@ export class App {
             ignoreAttributes: false,
             parseAttributeValue: true,
         });
-        const outlines = dom.opml?.body?.outline;
-        if (!outlines) {
-            vscode.window.showErrorMessage("Bad OPML format");
-            return;
-        }
-        const feeds: string[] = [];
-        for (const outline of outlines) {
-            const feed = outline.xmlUrl;
-            if (!feed) {
-                vscode.window.showErrorMessage("Bad OPML format");
-                return;
-            }
-            feeds.push(feed as string);
-        }
 
-        await collection.addFeeds(feeds);
+        const walk = (node: any, feeds: string[]) => {
+            if (node?.xmlUrl) {
+                feeds.push(node.xmlUrl as string);
+            }
+            if (node?.outline) {
+                for (const outline of node.outline) {
+                    walk(outline, feeds);
+                }
+            }
+            return feeds;
+        };
+
+        await collection.addFeeds(walk(dom.opml?.body, []));
     }
 
     private async selectExpire(): Promise<number|undefined> {
