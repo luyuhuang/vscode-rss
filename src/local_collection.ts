@@ -102,7 +102,10 @@ export class LocalCollection extends Collection {
             const cfg = App.cfg;
             const res = await got(url, {
                 timeout: cfg.timeout * 1000, retry: cfg.retry, encoding: 'binary',
-                headers: {'If-None-Match': this.etags.get(url)}
+                headers: {
+                    'If-None-Match': this.etags.get(url),
+                    'Accept-Encoding': 'gzip, br',
+                }
             });
             if (res.statusCode === 304) {
                 return;

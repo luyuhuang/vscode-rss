@@ -157,14 +157,18 @@ function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | un
         const $ele = $(ele);
         const href = $ele.attr('href');
         if (href) {
-            $ele.attr('href', new URL(href, baseURL).href);
+            try {
+                $ele.attr('href', new URL(href, baseURL).href);
+            } catch {}
         }
     });
     $('img').each((_, ele) => {
         const $ele = $(ele);
         const src = $ele.attr('src');
         if (src) {
-            $ele.attr('src', new URL(src, baseURL).href);
+            try {
+                $ele.attr('src', new URL(src, baseURL).href);
+            } catch {}
         }
         $ele.removeAttr('height');
     });
