@@ -7,7 +7,7 @@ export class FeedList implements vscode.TreeDataProvider<vscode.TreeItem> {
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
     refresh(): void {
-        this._onDidChangeTreeData.fire();
+        this._onDidChangeTreeData.fire(undefined);
     }
 
     getTreeItem(ele: vscode.TreeItem): vscode.TreeItem {

@@ -173,7 +173,7 @@ function parseEntry(dom: any, baseURL: string, exclude: Set<string>): Entry | un
         $ele.removeAttr('height');
     });
     $('script').remove();
-    content = he.decode($.html());
+    content = $.html();
 
     let date;
     if (dom.published) {

@@ -7,7 +7,7 @@ export class AccountList implements vscode.TreeDataProvider<vscode.TreeItem> {
     readonly onDidChangeTreeData: vscode.Event<Account | undefined> = this._onDidChangeTreeData.event;
 
     refresh(): void {
-        this._onDidChangeTreeData.fire();
+        this._onDidChangeTreeData.fire(undefined);
     }
 
     getTreeItem(ele: vscode.TreeItem) {
