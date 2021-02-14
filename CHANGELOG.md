@@ -1,5 +1,12 @@
 # Change Log
 
+## v0.9.3 (2021-02-14)
+
+Happy Valentine's Day
+
+- Fix parsing opml error(close #28)
+- Compatible with some format(close #29)
+
 ## v0.9.2 (2021-01-15)
 
 - Using Etag to improve update efficiency
