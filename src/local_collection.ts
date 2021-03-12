@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import got from 'got';
-import { parseXML } from './parser';
+import { parseXML, parseXML2 } from './parser';
 import { Entry, Summary, Abstract } from './content';
 import { App } from './app';
 import { Collection } from './collection';
@@ -117,7 +117,7 @@ export class LocalCollection extends Collection {
                 }
                 this.etags.set(url, etag);
             }
-            const [e, s] = parseXML(res.body, new Set(summary.catelog));
+            const [e, s] = parseXML2(res.body, new Set(summary.catelog));
             entries = e;
             summary.title = s.title;
             summary.link = s.link;

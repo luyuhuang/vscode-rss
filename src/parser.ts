@@ -278,3 +278,156 @@ export function parseXML(xml: string, exclude: Set<string>): [Entry[], Summary] 
 
     return [entries, summary];
 }
+
+function getLink($link: Cheerio): string {
+    let target = '';
+    $link.each((_, ele) => {
+        const $ele = cheerio(ele);
+        if (!target || $ele.attr('rel') === 'alternate') {
+            target = $ele.attr('href') || $ele.text();
+        }
+    });
+    return target;
+}
+
+function resolveRelativeLinks(content: string, base: string): string {
+    const $ = cheerio.load(content);
+    $('a').each((_, ele) => {
+        const $ele = $(ele);
+        const href = $ele.attr('href');
+        if (href) {
+            try {
+                $ele.attr('href', new URL(href, base).href);
+            } catch {}
+        }
+    });
+    $('img').each((_, ele) => {
+        const $ele = $(ele);
+        const src = $ele.attr('src');
+        if (src) {
+            try {
+                $ele.attr('src', new URL(src, base).href);
+            } catch {}
+        }
+        $ele.removeAttr('height');
+    });
+    $('script').remove();
+    return $.html();
+}
+
+// https://www.rssboard.org/rss-2-0
+function parseRSS($dom: CheerioStatic, exclude: Set<string>): [Entry[], Summary] {
+    const title = $dom('channel > title').text();
+    const base = getLink($dom('channel > link'));
+    const summary = new Summary(base, title);
+    const entries: Entry[] = [];
+    $dom('channel > item').each((_, ele) => {
+        const $ele = $dom(ele);
+        let id = $ele.find('guid').text();
+        let title = $ele.find('title').text();
+        let description = $ele.find('description').text();
+        let content = $ele.find('content\\:encoded').text();
+        let date: string | number = $ele.find('pubDate').text();
+        let link = getLink($ele.find('link'));
+
+        id = id || link;
+        title = title || description || content;
+        content = content || description || title;
+        date = date ? new Date(date).getTime() : new Date().getTime();
+
+        if (!id) {
+            throw new Error('Feed Format Error: Entry Missing ID');
+        }
+        id = crypto.createHash("sha256").update(base + id).digest('hex');
+
+        if (!exclude.has(id)) {
+            content = resolveRelativeLinks(content, base);
+            entries.push(new Entry(id, title, content, date, link, false));
+        }
+    });
+
+    return [entries, summary];
+}
+
+// https://validator.w3.org/feed/docs/rss1.html
+function parseRDF($dom: CheerioStatic, exclude: Set<string>): [Entry[], Summary] {
+    const title = $dom('channel > title').text();
+    const base = getLink($dom('channel > link'));
+    const summary = new Summary(base, title);
+    const entries: Entry[] = [];
+    $dom('rdf\\:RDF > item').each((_, ele) => {
+        const $ele = $dom(ele);
+        let title = $ele.find('title').text();
+        let content = $ele.find('description').text();
+        let date: string | number = $ele.find('dc\\:date').text();
+        let link = getLink($ele.find('link'));
+
+        if (!link) {
+            throw new Error('Feed Format Error: Entry Missing Link');
+        }
+
+        title = title || content;
+        content = content || title;
+        date = date ? new Date(date).getTime() : new Date().getTime();
+        const id = crypto.createHash("sha256").update(base + link).digest('hex');
+
+        if (!exclude.has(id)) {
+            content = resolveRelativeLinks(content, base);
+            entries.push(new Entry(id, title, content, date, link, false));
+        }
+    });
+
+    return [entries, summary];
+}
+
+// https://tools.ietf.org/html/rfc4287
+function parseAtom($dom: CheerioStatic, exclude: Set<string>): [Entry[], Summary] {
+    const title = $dom('feed > title').text();
+    const base = getLink($dom('feed > link'));
+    const summary = new Summary(base, title);
+    const entries: Entry[] = [];
+    $dom('feed > entry').each((_, ele) => {
+        const $ele = $dom(ele);
+        let id = $ele.find('id').text();
+        let title = $ele.find('title').text();
+        let summary = $ele.find('summary').text();
+        let content = $ele.find('content').text();
+        let date: string | number = $ele.find('published').text();
+        let link = getLink($ele.find('link'));
+
+        id = id || link;
+        title = title || summary || content;
+        content = content || summary || title;
+        date = date ? new Date(date).getTime() : new Date().getTime();
+
+        if (!id) {
+            throw new Error('Feed Format Error: Entry Missing ID');
+        }
+        id = crypto.createHash("sha256").update(base + id).digest('hex');
+
+        if (!exclude.has(id)) {
+            content = resolveRelativeLinks(content, base);
+            entries.push(new Entry(id, title, content, date, link, false));
+        }
+    });
+
+    return [entries, summary];
+}
+
+export function parseXML2(xml: string, exclude: Set<string>): [Entry[], Summary] {
+    const match = xml.match(/<\?xml.*encoding="(\S+)".*\?>/);
+    xml = iconv.decode(Buffer.from(xml, 'binary'), match ? match[1]: 'utf-8');
+    const $dom = cheerio.load(xml, {xmlMode: true});
+
+    const root = $dom.root().children()[0].name;
+    switch (root) {
+    case 'rss':
+        return parseRSS($dom, exclude);
+    case 'rdf:RDF':
+        return parseRDF($dom, exclude);
+    case 'feed':
+        return parseAtom($dom, exclude);
+    default:
+        throw new Error('Unsupported format: ' + root);
+    }
+}
