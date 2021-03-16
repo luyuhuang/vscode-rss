@@ -1,7 +1,7 @@
 {
     "name": "rss",
     "displayName": "RSS",
-    "description": "A RSS reader embedded in Visual Studio Code",
+    "description": "An RSS reader embedded in Visual Studio Code",
     "license": "MIT",
     "icon": "logo.png",
     "version": "0.9.3",

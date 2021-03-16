@@ -326,7 +326,7 @@ function parseRSS($dom: CheerioStatic, exclude: Set<string>): [Entry[], Summary]
         let id = $ele.find('guid').text();
         let title = $ele.find('title').text();
         let description = $ele.find('description').text();
-        let content = $ele.find('content\\:encoded').text();
+        let content = $ele.find('content').text() || $ele.find('content\\:encoded').text();
         let date: string | number = $ele.find('pubDate').text();
         let link = getLink($ele.find('link'));
 

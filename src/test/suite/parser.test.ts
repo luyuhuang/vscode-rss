@@ -23,7 +23,7 @@ suite('test parser', () => {
         </entry>
         </feed>
         `;
-        const [entries, summary] = parser.parseXML(xml, new Set());
+        const [entries, summary] = parser.parseXML2(xml, new Set());
         assert.equal(summary.title, "Luyu Huang's Tech Blog");
         assert.equal(summary.link, 'https://luyuhuang.tech/');
         assert.equal(entries.length, 1);
@@ -41,7 +41,7 @@ suite('test parser', () => {
         <title type="html">Luyu Huang's Tech Blog</title>
         </feed>
         `;
-        const [entries, summary] = parser.parseXML(xml, new Set());
+        const [entries, summary] = parser.parseXML2(xml, new Set());
         assert.equal(summary.title, "Luyu Huang's Tech Blog");
         assert.equal(summary.link, 'https://luyuhuang.tech/');
         assert.equal(entries.length, 0);
@@ -71,7 +71,7 @@ suite('test parser', () => {
 
         </feed>
         `;
-        const [entries, summary] = parser.parseXML(xml, new Set());
+        const [entries, summary] = parser.parseXML2(xml, new Set());
         assert.equal(summary.title, "Luyu Huang's Tech Blog");
         assert.equal(summary.link, 'https://luyuhuang.tech/');
         assert.equal(entries.length, 2);
@@ -100,7 +100,7 @@ suite('test parser', () => {
         </entry>
         </feed>
         `;
-        const [entries, summary] = parser.parseXML(xml, new Set());
+        const [entries, summary] = parser.parseXML2(xml, new Set());
         assert.equal(summary.title, "Luyu Huang's Tech Blog");
         assert.equal(summary.link, 'https://luyuhuang.tech/');
         assert.equal(entries.length, 1);
@@ -124,7 +124,31 @@ suite('test parser', () => {
         </item>
         </channel>
         `;
-        const [entries, summary] = parser.parseXML(xml, new Set());
+        const [entries, summary] = parser.parseXML2(xml, new Set());
+        assert.equal(summary.title, "Site Title");
+        assert.equal(summary.link, 'http://world.huanqiu.com');
+        assert.equal(entries.length, 1);
+        assert.equal(entries[0].title, 'Title 1');
+        assert.equal(entries[0].link, 'http://world.huanqiu.com/exclusive/2020-06/16558145.html');
+        assert.equal(entries[0].content, '<html><head></head><body>Content 1</body></html>');
+    });
+
+    test('content encoded', () => {
+        const xml = `
+        <rss version="2.0">
+        <channel>
+        <title>Site Title</title>
+        <link>http://world.huanqiu.com</link>
+        <item>
+        <title><![CDATA[Title 1]]></title>
+        <link><![CDATA[http://world.huanqiu.com/exclusive/2020-06/16558145.html]]></link>
+        <description><![CDATA[Description 1]]></description>
+        <content:encoded><![CDATA[Content 1]]></content:encoded>
+        <pubDate>2020-06-18</pubDate>
+        </item>
+        </channel>
+        `;
+        const [entries, summary] = parser.parseXML2(xml, new Set());
         assert.equal(summary.title, "Site Title");
         assert.equal(summary.link, 'http://world.huanqiu.com');
         assert.equal(entries.length, 1);
@@ -149,7 +173,7 @@ suite('test parser', () => {
         </item>
         </channel>
         `;
-        const [entries, summary] = parser.parseXML(xml, new Set());
+        const [entries, summary] = parser.parseXML2(xml, new Set());
         assert.equal(summary.title, "Site Title");
         assert.equal(summary.link, 'http://world.huanqiu.com');
         assert.equal(entries.length, 1);
@@ -174,7 +198,7 @@ suite('test parser', () => {
         </item>
         </channel>
         `;
-        const [entries, summary] = parser.parseXML(xml, new Set());
+        const [entries, summary] = parser.parseXML2(xml, new Set());
         assert.equal(summary.title, "Site Title");
         assert.equal(summary.link, 'http://world.huanqiu.com');
         assert.equal(entries.length, 1);
@@ -199,7 +223,7 @@ suite('test parser', () => {
         </entry>
         </feed>
         `;
-        const [entries, summary] = parser.parseXML(xml, new Set());
+        const [entries, summary] = parser.parseXML2(xml, new Set());
         assert.equal(entries[0].date, new Date('2020-06-03T00:00:00+08:00').getTime());
 
     });
@@ -219,7 +243,7 @@ suite('test parser', () => {
         </item>
         </channel>
         `;
-        const [entries, summary] = parser.parseXML(xml, new Set());
+        const [entries, summary] = parser.parseXML2(xml, new Set());
         assert.equal(entries[0].date, new Date('2020-06-18').getTime());
     });
 
@@ -237,7 +261,7 @@ suite('test parser', () => {
         </item>
         </channel>
         `;
-        const [entries, summary] = parser.parseXML(xml, new Set());
+        const [entries, summary] = parser.parseXML2(xml, new Set());
         assert(new Date().getTime() - entries[0].date < 10);
     });
 });

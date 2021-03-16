@@ -1,6 +1,6 @@
 # VSCode-RSS
 
-A RSS reader embedded in Visual Studio Code
+An RSS reader embedded in Visual Studio Code
 
 [![version](https://vsmarketplacebadge.apphb.com/version-short/luyuhuang.rss.svg)](https://marketplace.visualstudio.com/items?itemName=luyuhuang.rss)
 [![rating](https://vsmarketplacebadge.apphb.com/rating-short/luyuhuang.rss.svg)](https://marketplace.visualstudio.com/items?itemName=luyuhuang.rss)
