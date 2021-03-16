@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.10.0 (2021-03-16)
+
+- New RSS parser based on cheerio
+
 ## v0.9.3 (2021-02-14)
 
 Happy Valentine's Day
