@@ -262,6 +262,6 @@ suite('test parser', () => {
         </channel>
         `;
         const [entries, summary] = parser.parseXML2(xml, new Set());
-        assert(new Date().getTime() - entries[0].date < 10);
+        assert(new Date().getTime() - entries[0].date < 500);
     });
 });
