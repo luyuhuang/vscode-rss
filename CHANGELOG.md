@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.10.1 (2021-06-12)
+
+- Local accounts always update old articles(close #38)
+
 ## v0.10.0 (2021-03-16)
 
 - New RSS parser based on cheerio
