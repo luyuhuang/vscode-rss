@@ -316,7 +316,7 @@ function resolveRelativeLinks(content: string, base: string): string {
 }
 
 // https://www.rssboard.org/rss-2-0
-function parseRSS($dom: CheerioStatic, exclude: Set<string>): [Entry[], Summary] {
+function parseRSS($dom: CheerioStatic): [Entry[], Summary] {
     const title = $dom('channel > title').text();
     const base = getLink($dom('channel > link'));
     const summary = new Summary(base, title);
@@ -340,17 +340,15 @@ function parseRSS($dom: CheerioStatic, exclude: Set<string>): [Entry[], Summary]
         }
         id = crypto.createHash("sha256").update(base + id).digest('hex');
 
-        if (!exclude.has(id)) {
-            content = resolveRelativeLinks(content, base);
-            entries.push(new Entry(id, title, content, date, link, false));
-        }
+        content = resolveRelativeLinks(content, base);
+        entries.push(new Entry(id, title, content, date, link, false));
     });
 
     return [entries, summary];
 }
 
 // https://validator.w3.org/feed/docs/rss1.html
-function parseRDF($dom: CheerioStatic, exclude: Set<string>): [Entry[], Summary] {
+function parseRDF($dom: CheerioStatic): [Entry[], Summary] {
     const title = $dom('channel > title').text();
     const base = getLink($dom('channel > link'));
     const summary = new Summary(base, title);
@@ -371,17 +369,15 @@ function parseRDF($dom: CheerioStatic, exclude: Set<string>): [Entry[], Summary]
         date = date ? new Date(date).getTime() : new Date().getTime();
         const id = crypto.createHash("sha256").update(base + link).digest('hex');
 
-        if (!exclude.has(id)) {
-            content = resolveRelativeLinks(content, base);
-            entries.push(new Entry(id, title, content, date, link, false));
-        }
+        content = resolveRelativeLinks(content, base);
+        entries.push(new Entry(id, title, content, date, link, false));
     });
 
     return [entries, summary];
 }
 
 // https://tools.ietf.org/html/rfc4287
-function parseAtom($dom: CheerioStatic, exclude: Set<string>): [Entry[], Summary] {
+function parseAtom($dom: CheerioStatic): [Entry[], Summary] {
     const title = $dom('feed > title').text();
     const base = getLink($dom('feed > link'));
     const summary = new Summary(base, title);
@@ -405,16 +401,14 @@ function parseAtom($dom: CheerioStatic, exclude: Set<string>): [Entry[], Summary
         }
         id = crypto.createHash("sha256").update(base + id).digest('hex');
 
-        if (!exclude.has(id)) {
-            content = resolveRelativeLinks(content, base);
-            entries.push(new Entry(id, title, content, date, link, false));
-        }
+        content = resolveRelativeLinks(content, base);
+        entries.push(new Entry(id, title, content, date, link, false));
     });
 
     return [entries, summary];
 }
 
-export function parseXML2(xml: string, exclude: Set<string>): [Entry[], Summary] {
+export function parseXML2(xml: string): [Entry[], Summary] {
     const match = xml.match(/<\?xml.*encoding="(\S+)".*\?>/);
     xml = iconv.decode(Buffer.from(xml, 'binary'), match ? match[1]: 'utf-8');
     const $dom = cheerio.load(xml, {xmlMode: true});
@@ -422,11 +416,11 @@ export function parseXML2(xml: string, exclude: Set<string>): [Entry[], Summary]
     const root = $dom.root().children()[0].name;
     switch (root) {
     case 'rss':
-        return parseRSS($dom, exclude);
+        return parseRSS($dom);
     case 'rdf:RDF':
-        return parseRDF($dom, exclude);
+        return parseRDF($dom);
     case 'feed':
-        return parseAtom($dom, exclude);
+        return parseAtom($dom);
     default:
         throw new Error('Unsupported format: ' + root);
     }

@@ -117,7 +117,7 @@ export class LocalCollection extends Collection {
                 }
                 this.etags.set(url, etag);
             }
-            const [e, s] = parseXML2(res.body, new Set(summary.catelog));
+            const [e, s] = parseXML2(res.body);
             entries = e;
             summary.title = s.title;
             summary.link = s.link;
@@ -128,23 +128,29 @@ export class LocalCollection extends Collection {
             summary.ok = false;
         }
 
-        const abstracts: Abstract[] = [];
-        for (const id of summary.catelog) {
-            const abstract = this.getAbstract(id);
-            if (abstract !== undefined) {
-                abstracts.push(abstract);
-            }
-        }
-
+        const id2abs = new Map<string, Abstract>();
         for (const entry of entries) {
             await this.updateContent(entry.id, entry.content);
             const abstract = Abstract.fromEntry(entry, url);
+            const old = this.getAbstract(abstract.id);
+            if (old) {
+                abstract.read = old.read;
+                abstract.starred = old.starred;
+            }
             this.updateAbstract(abstract.id, abstract);
-            abstracts.push(abstract);
+            id2abs.set(abstract.id, abstract);
         }
 
-        abstracts.sort((a, b) => b.date - a.date);
-        summary.catelog = abstracts.map(a => a.id);
+        for (const id of summary.catelog) {
+            const abstract = this.getAbstract(id);
+            if (abstract !== undefined && !id2abs.has(abstract.id)) {
+                id2abs.set(abstract.id, abstract);
+            }
+        }
+
+        summary.catelog = [...id2abs.values()]
+            .sort((a, b) => b.date - a.date)
+            .map(a => a.id);
         this.updateSummary(url, summary);
     }
 

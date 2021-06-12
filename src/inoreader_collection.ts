@@ -313,9 +313,9 @@ export class InoreaderCollection extends Collection {
             }
         }
 
-        summary.catelog = [...id2abs.entries()]
-            .sort(([_, a], [__, b]) => b.date - a.date)
-            .map(([id, _]) => id);
+        summary.catelog = [...id2abs.values()]
+            .sort((a, b) => b.date - a.date)
+            .map(a => a.id);
         summary.ok = true;
         this.updateSummary(url, summary);
     }
