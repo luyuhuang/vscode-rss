@@ -3,18 +3,17 @@ import { Collection } from './collection';
 import { LocalCollection } from './local_collection';
 import { TTRSSCollection } from './ttrss_collection';
 import { join as pathJoin } from 'path';
-import { checkDir, readFile, TTRSSApiURL, walkFeedTree, writeFile } from './utils';
+import { readFile, TTRSSApiURL, walkFeedTree, writeFile } from './utils';
 import { AccountList, Account } from './account';
 import { FeedList, Feed } from './feeds';
 import { ArticleList, Article } from './articles';
 import { FavoritesList, Item } from './favorites';
-import { Abstract, Summary } from './content';
+import { Abstract } from './content';
 import * as uuid from 'uuid';
 import { StatusBar } from './status_bar';
 import { InoreaderCollection } from './inoreader_collection';
 import * as parser from "fast-xml-parser";
 import { assert } from 'console';
-import { privateEncrypt } from 'crypto';
 
 export class App {
     private static _instance?: App;

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import got from 'got';
-import { parseXML, parseXML2 } from './parser';
+import { parseXML2 } from './parser';
 import { Entry, Summary, Abstract } from './content';
 import { App } from './app';
 import { Collection } from './collection';

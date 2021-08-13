@@ -311,6 +311,15 @@ function resolveRelativeLinks(content: string, base: string): string {
         }
         $ele.removeAttr('height');
     });
+    $('video').each((_, ele) => {
+        const $ele = $(ele);
+        const src = $ele.attr('src');
+        if (src) {
+            try {
+                $ele.attr('src', new URL(src, base).href);
+            } catch {}
+        }
+    });
     $('script').remove();
     return $.html();
 }
