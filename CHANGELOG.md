@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.10.2 (2021-09-20)
+
+- Resolve reletive URLs of audio and video
+
 ## v0.10.1 (2021-06-12)
 
 - Local accounts always update old articles(close #38)
