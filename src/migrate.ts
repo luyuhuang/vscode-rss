@@ -23,7 +23,7 @@ export async function checkStoragePath(context: vscode.ExtensionContext): Promis
                 await checkDir(old);
                 try {
                     await moveFile(old, root);
-                } catch (e) {
+                } catch (e: any) {
                     throw Error(`Move data failed: ${e.toString()}`);
                 }
             });

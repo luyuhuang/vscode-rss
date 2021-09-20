@@ -290,36 +290,24 @@ function getLink($link: Cheerio): string {
     return target;
 }
 
+function resolveAttr($: CheerioStatic, base: string, selector: string, attr: string) {
+    $(selector).each((_, ele) => {
+        const $ele = $(ele);
+        const url = $ele.attr(attr);
+        if (url) {
+            try {
+                $ele.attr(attr, new URL(url, base).href);
+            } catch {}
+        }
+    });
+}
+
 function resolveRelativeLinks(content: string, base: string): string {
     const $ = cheerio.load(content);
-    $('a').each((_, ele) => {
-        const $ele = $(ele);
-        const href = $ele.attr('href');
-        if (href) {
-            try {
-                $ele.attr('href', new URL(href, base).href);
-            } catch {}
-        }
-    });
-    $('img').each((_, ele) => {
-        const $ele = $(ele);
-        const src = $ele.attr('src');
-        if (src) {
-            try {
-                $ele.attr('src', new URL(src, base).href);
-            } catch {}
-        }
-        $ele.removeAttr('height');
-    });
-    $('video').each((_, ele) => {
-        const $ele = $(ele);
-        const src = $ele.attr('src');
-        if (src) {
-            try {
-                $ele.attr('src', new URL(src, base).href);
-            } catch {}
-        }
-    });
+    resolveAttr($, base, 'a', 'href');
+    resolveAttr($, base, 'img', 'src');
+    resolveAttr($, base, 'video', 'src');
+    resolveAttr($, base, 'audio', 'src');
     $('script').remove();
     return $.html();
 }
