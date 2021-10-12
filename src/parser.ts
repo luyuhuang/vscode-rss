@@ -6,6 +6,7 @@ import { URL } from "url";
 import { isString, isArray, isNumber } from "util";
 import { Entry, Summary } from "./content";
 import * as crypto from 'crypto';
+import { CheerioAPI, Cheerio, Element } from "cheerio";
 
 function isStringified(s: any) {
     return isString(s) || isNumber(s);
@@ -279,10 +280,10 @@ export function parseXML(xml: string, exclude: Set<string>): [Entry[], Summary] 
     return [entries, summary];
 }
 
-function getLink($link: Cheerio): string {
+function getLink($link: Cheerio<Element>): string {
     let target = '';
     $link.each((_, ele) => {
-        const $ele = cheerio(ele);
+        const $ele = cheerio.default(ele);
         if (!target || $ele.attr('rel') === 'alternate') {
             target = $ele.attr('href') || $ele.text();
         }
@@ -290,7 +291,7 @@ function getLink($link: Cheerio): string {
     return target;
 }
 
-function resolveAttr($: CheerioStatic, base: string, selector: string, attr: string) {
+function resolveAttr($: CheerioAPI, base: string, selector: string, attr: string) {
     $(selector).each((_, ele) => {
         const $ele = $(ele);
         const url = $ele.attr(attr);
@@ -313,7 +314,7 @@ function resolveRelativeLinks(content: string, base: string): string {
 }
 
 // https://www.rssboard.org/rss-2-0
-function parseRSS($dom: CheerioStatic): [Entry[], Summary] {
+function parseRSS($dom: CheerioAPI): [Entry[], Summary] {
     const title = $dom('channel > title').text();
     const base = getLink($dom('channel > link'));
     const summary = new Summary(base, title);
@@ -345,7 +346,7 @@ function parseRSS($dom: CheerioStatic): [Entry[], Summary] {
 }
 
 // https://validator.w3.org/feed/docs/rss1.html
-function parseRDF($dom: CheerioStatic): [Entry[], Summary] {
+function parseRDF($dom: CheerioAPI): [Entry[], Summary] {
     const title = $dom('channel > title').text();
     const base = getLink($dom('channel > link'));
     const summary = new Summary(base, title);
@@ -374,7 +375,7 @@ function parseRDF($dom: CheerioStatic): [Entry[], Summary] {
 }
 
 // https://tools.ietf.org/html/rfc4287
-function parseAtom($dom: CheerioStatic): [Entry[], Summary] {
+function parseAtom($dom: CheerioAPI): [Entry[], Summary] {
     const title = $dom('feed > title').text();
     const base = getLink($dom('feed > link'));
     const summary = new Summary(base, title);

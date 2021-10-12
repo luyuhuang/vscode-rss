@@ -122,7 +122,7 @@ export class LocalCollection extends Collection {
             summary.title = s.title;
             summary.link = s.link;
             summary.ok = true;
-        } catch (error) {
+        } catch (error: any) {
             vscode.window.showErrorMessage(error.toString());
             entries = [];
             summary.ok = false;

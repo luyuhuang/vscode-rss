@@ -128,7 +128,7 @@ export abstract class Collection {
         const file = pathJoin(this.dir, 'articles', id.toString());
         try {
             return await readFile(file);
-        } catch (error) {
+        } catch (error: any) {
             vscode.window.showErrorMessage(error.toString());
             throw error;
         }

@@ -131,7 +131,7 @@ export class TTRSSCollection extends Collection {
         }, async () => {
             try {
                 await this._addFeed(feed, category_id);
-            } catch (error) {
+            } catch (error: any) {
                 vscode.window.showErrorMessage('Add feed failed: ' + error.toString());
             }
         });
@@ -155,7 +155,7 @@ export class TTRSSCollection extends Collection {
         }, async () => {
             try {
                 await this._delFeed(feed);
-            } catch (error) {
+            } catch (error: any) {
                 vscode.window.showErrorMessage('Remove feed failed: ' + error.toString());
             }
         });
@@ -260,7 +260,7 @@ export class TTRSSCollection extends Collection {
                     const html = $.html();
                     await this.updateContent(id, html);
                     return html;
-                } catch (error) {
+                } catch (error: any) {
                     vscode.window.showErrorMessage('Fetch content failed: ' + error.toString());
                     throw error;
                 }
@@ -337,7 +337,7 @@ export class TTRSSCollection extends Collection {
             }
             await this.fetch(url, update);
             await this.commit();
-        } catch (error) {
+        } catch (error: any) {
             vscode.window.showErrorMessage('Update feed failed: ' + error.toString());
         }
     }
@@ -345,7 +345,7 @@ export class TTRSSCollection extends Collection {
     async fetchAll(update: boolean) {
         try {
             await this._fetchAll(update);
-        } catch (error) {
+        } catch (error: any) {
             vscode.window.showErrorMessage('Update feeds failed: ' + error.toString());
         }
     }

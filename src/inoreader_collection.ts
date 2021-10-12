@@ -205,7 +205,7 @@ export class InoreaderCollection extends Collection {
                     await this._fetchAll(false);
                     App.instance.refreshLists();
                 }
-            } catch (error) {
+            } catch (error: any) {
                 vscode.window.showErrorMessage('Add feed failed: ' + error.toString());
             }
         });
@@ -228,7 +228,7 @@ export class InoreaderCollection extends Collection {
                 }, false);
                 await this._fetchAll(false);
                 App.instance.refreshLists();
-            } catch (error) {
+            } catch (error: any) {
                 vscode.window.showErrorMessage('Remove feed failed: ' + error.toString());
             }
         });
@@ -374,7 +374,7 @@ export class InoreaderCollection extends Collection {
     async fetchAll(update: boolean) {
         try {
             await this._fetchAll(update);
-        } catch (error) {
+        } catch (error: any) {
             vscode.window.showErrorMessage('Update feeds failed: ' + error.toString());
         }
     }
@@ -383,7 +383,7 @@ export class InoreaderCollection extends Collection {
         try {
             await this.fetch(url, update);
             await this.commit();
-        } catch (error) {
+        } catch (error: any) {
             vscode.window.showErrorMessage('Update feed failed: ' + error.toString());
         }
     }
