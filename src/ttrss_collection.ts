@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
 import * as cheerio from 'cheerio';
 import { join as pathJoin } from 'path';
-import got from 'got';
 import { Summary, Abstract } from './content';
 import { App } from './app';
-import { writeFile, readFile, removeFile, removeDir, fileExists } from './utils';
+import { writeFile, readFile, removeFile, removeDir, fileExists, got } from './utils';
 import { Collection } from './collection';
 
 export class TTRSSCollection extends Collection {

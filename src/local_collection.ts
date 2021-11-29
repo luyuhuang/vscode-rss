@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
-import got from 'got';
 import { parseXML2 } from './parser';
 import { Entry, Summary, Abstract } from './content';
 import { App } from './app';
 import { Collection } from './collection';
-import { walkFeedTree } from './utils';
+import { walkFeedTree, got } from './utils';
 
 export class LocalCollection extends Collection {
     private etags = new Map<string, string>();

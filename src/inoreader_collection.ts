@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
 import { Collection } from "./collection";
-import got from "got/dist/source";
 import { App } from "./app";
 import { join as pathJoin, resolve } from 'path';
-import { writeFile, readFile, removeFile, fileExists } from './utils';
+import { writeFile, readFile, removeFile, fileExists, got } from './utils';
 import { Summary, Abstract } from "./content";
 import * as http from 'http';
 import { parse as url_parse } from 'url';
