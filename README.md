@@ -73,5 +73,7 @@ You can modify the configuration as needed.
 | `rss.status-bar-update` | `integer` | Scrolling notification update interval(s) |
 | `rss.status-bar-length` | `integer` | Max length of notification displayed in status bar |
 | `rss.storage-path` | `string` | Data storage path, must be an absolute path |
+| `rss.inoreader-domain` | `string` | Domain of Inoreader |
+| `rss.inoreader-limit` | `string` | Limit of the number of articles fetched by Inoreader at a time |
 
 Enjoy it!
