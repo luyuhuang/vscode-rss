@@ -82,6 +82,13 @@
                     "type": "string",
                     "default": "www.inoreader.com",
                     "description": "Domain of Inoreader"
+                },
+                "rss.inoreader-limit": {
+                    "type": "integer",
+                    "default": 100,
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "description": "Limit of the number of articles fetched by Inoreader at a time"
                 }
             }
         },

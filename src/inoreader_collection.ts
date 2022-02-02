@@ -276,13 +276,18 @@ export class InoreaderCollection extends Collection {
             return;
         }
 
-        const id2abs = new Map<string, Abstract>();
+        const param: {[key: string]: any} = {};
+        param.n = App.cfg.get('inoreader-limit');
+        if (App.cfg.get('fetch-unread-only')) {
+            param.xt = 'user/-/state/com.google/read';
+        }
 
         const res = await this.request(
             'stream/contents/' + encodeURIComponent(summary.custom_data),
-            App.cfg.get('fetch-unread-only') ? {xt: 'user/-/state/com.google/read'} : {},
+            param
         );
         const items = res.items as any[];
+        const id2abs = new Map<string, Abstract>();
         for (const item of items) {
             let read = false, starred = false;
             for (const tag of item.categories as string[]) {

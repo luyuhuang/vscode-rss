@@ -447,7 +447,7 @@ export class App {
             {placeHolder: "Select account type"}
         );
         if (type === undefined) {return;}
-        const name = await vscode.window.showInputBox({prompt: 'Enter account name'});
+        const name = await vscode.window.showInputBox({prompt: 'Enter account name', value: type});
         if (name === undefined || name.length <= 0) {return;}
 
         if (type === 'local') {
