@@ -148,7 +148,7 @@
             {
                 "command": "rss.open-link",
                 "title": "Open link",
-                "icon": "$(link-external)"
+                "icon": "$(globe)"
             },
             {
                 "command": "rss.mark-read",
@@ -181,7 +181,7 @@
             {
                 "command": "rss.add-to-favorites",
                 "title": "Add to favorites",
-                "icon": "$(heart)"
+                "icon": "$(star-empty)"
             },
             {
                 "command": "rss.remove-from-favorites",
