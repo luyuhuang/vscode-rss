@@ -147,11 +147,13 @@
             },
             {
                 "command": "rss.open-link",
-                "title": "Open link"
+                "title": "Open link",
+                "icon": "$(globe)"
             },
             {
                 "command": "rss.mark-read",
-                "title": "Mark as read"
+                "title": "Mark as read",
+                "icon": "$(check)"
             },
             {
                 "command": "rss.mark-unread",
@@ -178,7 +180,8 @@
             },
             {
                 "command": "rss.add-to-favorites",
-                "title": "Add to favorites"
+                "title": "Add to favorites",
+                "icon": "$(star-empty)"
             },
             {
                 "command": "rss.remove-from-favorites",
@@ -409,11 +412,13 @@
                 },
                 {
                     "command": "rss.open-link",
-                    "when": "viewItem == article"
+                    "when": "viewItem == article",
+                    "group": "inline"
                 },
                 {
                     "command": "rss.mark-read",
-                    "when": "view == rss-articles"
+                    "when": "view == rss-articles",
+                    "group": "inline"
                 },
                 {
                     "command": "rss.mark-unread",
@@ -421,7 +426,8 @@
                 },
                 {
                     "command": "rss.add-to-favorites",
-                    "when": "view == rss-articles"
+                    "when": "view == rss-articles",
+                    "group": "inline"
                 },
                 {
                     "command": "rss.remove-from-favorites",
