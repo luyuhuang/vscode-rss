@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.10.4 (2022-03-26)
+
+- Quick access buttons (close #47)
+- Update some dependencies
+
 ## v0.10.3 (2022-02-02)
 
 - The limit of the number of articles fetched by Inoreader at a time is configurable(close #46)
