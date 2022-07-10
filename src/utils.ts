@@ -3,7 +3,7 @@ import * as fse from 'fs-extra';
 import * as tls from 'tls';
 import got_ from 'got';
 
-export const got = got_.extend({ca: [...tls.rootCertificates]});
+export const got = got_.extend({https: {certificateAuthority: [...tls.rootCertificates]}});
 
 export function checkDir(path: string) {
     return new Promise(resolve => fs.mkdir(path, resolve));
