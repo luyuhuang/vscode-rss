@@ -12,8 +12,8 @@ import { Abstract } from './content';
 import * as uuid from 'uuid';
 import { StatusBar } from './status_bar';
 import { InoreaderCollection } from './inoreader_collection';
-import * as parser from "fast-xml-parser";
 import { assert } from 'console';
+import { parseOPML } from './parser';
 
 export class App {
     private static _instance?: App;
@@ -574,25 +574,7 @@ export class App {
         }
 
         const xml = await readFile(paths[0].fsPath);
-        const dom = parser.parse(xml, {
-            attributeNamePrefix: "",
-            ignoreAttributes: false,
-            parseAttributeValue: true,
-        });
-
-        const walk = (node: any, feeds: string[]) => {
-            if (node?.xmlUrl) {
-                feeds.push(node.xmlUrl as string);
-            }
-            if (node?.outline) {
-                for (const outline of node.outline) {
-                    walk(outline, feeds);
-                }
-            }
-            return feeds;
-        };
-
-        await collection.addFeeds(walk(dom.opml?.body, []));
+        await collection.addFeeds(parseOPML(xml));
     }
 
     private async selectExpire(): Promise<number|undefined> {

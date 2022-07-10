@@ -423,3 +423,15 @@ export function parseXML2(xml: string): [Entry[], Summary] {
         throw new Error('Unsupported format: ' + root);
     }
 }
+
+export function parseOPML(opml: string): string[] {
+    const $dom = cheerio.load(opml, {xmlMode: true});
+    const ans: string[] = [];
+    $dom('outline').each((_, ele) => {
+        const url = $dom(ele).attr('xmlUrl');
+        if (url) {
+            ans.push(url);
+        }
+    });
+    return ans;
+}
